@@ -181,7 +181,7 @@ const css = `
 
   @media (max-width:900px) {
     .hero-page,.cl-page { grid-template-columns:1fr; }
-    .hero-right,.cl-right { display:none; }
+    .hero-right { display:none; }
     .hero-left,.cl-left { padding:60px 24px; }
     .results-page,.loading-page { grid-template-columns:1fr; }
     .results-left { position:static; height:auto; }
@@ -497,33 +497,38 @@ function CoverLetterPage({ onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [resumeText, setResumeText] = useState("");
 
   const tones = ["professional","friendly","confident","creative","concise"];
 
   const handleGenerate = async () => {
-    if (!file) return setError("Please upload your resume PDF");
-    if (!jd.trim()) return setError("Please paste a job description");
-    setLoading(true); setError(""); setResult(null);
-    try {
-      let text = resumeText;
-      if (!text) {
-        const form = new FormData();
-        form.append("file", file);
-        const r1 = await axios.post(`${API}/upload`, form);
-        text = r1.data.full_text;
-        setResumeText(text);
-      }
-      const r2 = await axios.post(`${API}/cover-letter`, {
-        resume_text: text, job_description: jd, tone
-      });
-      setResult(r2.data);
-      console.log("Result:", r2.data);
-    } catch {
-      setError("Something went wrong. Make sure backend is running.");
+  if (!file) return setError("Please upload your resume PDF");
+  if (!jd.trim()) return setError("Please paste a job description");
+  setLoading(true); setError(""); setResult(null);
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    const r1 = await axios.post(`${API}/upload`, form);
+    const text = r1.data.full_text;
+    if (!text || text.length < 10) {
+      setError("Could not extract text from PDF.");
+      setLoading(false);
+      return;
     }
-    setLoading(false);
-  };
+    const r2 = await axios.post(`${API}/cover-letter`, {
+      resume_text: text,
+      job_description: jd,
+      tone: tone,
+    });
+    if (r2.data && r2.data.cover_letter) {
+      setResult(r2.data);
+    } else {
+      setError("Generation failed. Please try again.");
+    }
+  } catch(e) {
+    setError(`Error: ${e.response?.data?.detail || e.message || "Something went wrong."}`);
+  }
+  setLoading(false);
+};
 
   const handleCopy = () => {
     navigator.clipboard.writeText(result.cover_letter);
@@ -543,7 +548,7 @@ function CoverLetterPage({ onBack }) {
         <div className="upload-card">
           <label className="field-label">Resume (PDF)</label>
           <div className="drop-zone" style={{marginBottom:18}}>
-            <input type="file" accept=".pdf" onChange={e=>{setFile(e.target.files[0]);setResumeText("");}}/>
+            <input type="file" accept=".pdf" onChange={e=>{setFile(e.target.files[0]);setResult(null);}}/>
             <span className="drop-icon">📄</span>
             <p className="drop-text">{file?"":"Click to upload your resume"}</p>
             <p className="drop-hint">{file?"":"PDF only"}</p>
