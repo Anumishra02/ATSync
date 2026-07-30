@@ -2,7 +2,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-const API = "https://atsync-5l6k.onrender.com";
+const API = "https://atsync-5l6k.onrender.com/api/resume";
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
