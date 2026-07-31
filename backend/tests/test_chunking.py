@@ -100,6 +100,19 @@ class TestResumeChunking:
         chunks = chunk_resume(RESUME)
         assert all(not c.is_scorable for c in chunks if c.kind is ChunkKind.HEADING)
 
+    def test_title_case_job_titles_are_not_misclassified_as_headings(self):
+        # Title Case used to be accepted as a third heading path (alongside
+        # vocab and ALL CAPS). Too loose against real documents: a job
+        # title is Title Case too, and isn't a section boundary.
+        text = (
+            "Senior Backend Engineer\n"
+            "Built distributed systems at scale.\n\n"
+            "React Native Developer\n"
+            "Shipped mobile apps used by millions.\n"
+        )
+        chunks = chunk_resume(text)
+        assert all(c.kind is not ChunkKind.HEADING for c in chunks)
+
 
 class TestJobDescriptionChunking:
     def test_company_boilerplate_is_excluded_from_scoring(self):
@@ -210,3 +223,26 @@ class TestScorableFloor:
         resume = "EXPERIENCE\n\n• Shipped\n• Built a FastAPI service in Python\n"
         scorable = [c.text for c in chunk_resume(resume) if c.is_scorable]
         assert scorable == ["Built a FastAPI service in Python"]
+
+    def test_terse_resume_skills_section_survives(self):
+        """The same stack-list style is just as common on the resume side,
+        under a Skills heading -- the floor shouldn't drop those either.
+        """
+        resume = "SKILLS\n\n• Python\n• Docker\n• Kubernetes\n"
+        scorable = [c.text for c in chunk_resume(resume) if c.is_scorable]
+        assert scorable == ["Python", "Docker", "Kubernetes"]
+
+    def test_terse_floor_relief_is_scoped_to_the_skills_section_only(self):
+        # A one-word bullet outside Skills is still noise, even in the same
+        # document that has a terse Skills section.
+        resume = (
+            "SKILLS\n\n• Python\n• Docker\n\n"
+            "EXPERIENCE\n\n• Shipped\n• Built a FastAPI service in Python\n"
+        )
+        chunks = {c.text: c.is_scorable for c in chunk_resume(resume) if c.kind is ChunkKind.BULLET}
+        assert chunks == {
+            "Python": True,
+            "Docker": True,
+            "Shipped": False,
+            "Built a FastAPI service in Python": True,
+        }

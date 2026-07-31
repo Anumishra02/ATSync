@@ -64,6 +64,13 @@ _SECTION_VOCAB = {
     "nice to have", "preferred qualifications", "what you will do",
     "what we offer", "benefits", "role", "the role",
 }
+# A resume's own skills section is exactly as terse as a JD's stack list --
+# "• Python" / "• Docker" / "• Kubernetes" one-per-bullet is a common resume
+# style, not noise. Chunk.min_words's resume default of 3 was written with
+# only prose bullets in mind and silently dropped these from scoring on the
+# resume side, the same class of bug chunk_job_description's min_words=1
+# fixed on the JD side.
+_SKILLS_SECTION_NAMES = frozenset({"skills", "technical skills", "core competencies", "technologies"})
 _REQUIRED_CUES = ("must have", "required", "requirement", "you have", "you will need",
                   "we require", "essential", "minimum", "at least", "proven")
 _PREFERRED_CUES = ("nice to have", "preferred", "bonus", "plus", "desirable",
@@ -107,11 +114,12 @@ class Chunk:
 
     @property
     def is_scorable(self) -> bool:
-        return (
-            self.kind is not ChunkKind.HEADING
-            and self.emphasis is not Emphasis.BOILERPLATE
-            and len(self.text.split()) >= self.min_words
-        )
+        if self.kind is ChunkKind.HEADING or self.emphasis is Emphasis.BOILERPLATE:
+            return False
+        # Inside a skills section, min_words doesn't apply -- see
+        # _SKILLS_SECTION_NAMES above.
+        floor = 1 if self.section in _SKILLS_SECTION_NAMES else self.min_words
+        return len(self.text.split()) >= floor
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,7 +148,19 @@ def normalize_document_text(text: str) -> str:
 
 
 def _is_heading(line: str) -> bool:
-    """Headings are short, unpunctuated, and usually shouty."""
+    """Headings are short, unpunctuated, and either known vocabulary or shouty.
+
+    Used to also accept generic Title Case ("every substantive word
+    capitalised") as a third path. Too loose against real documents: résumé
+    lines like "Senior Backend Engineer" or "React Native Developer" are
+    Title Case job titles, not section headings, and got misclassified as
+    headings on real PDFs in a way the synthetic test fixtures never
+    exercised. A heading now requires *known* section vocabulary or ALL
+    CAPS -- nothing else. Costs some recall on unusual heading styles
+    (rare, and a false negative here just leaves a heading classified as
+    prose, which is a much smaller error than fabricating a false section
+    boundary).
+    """
     stripped = line.strip().rstrip(":")
     if not stripped or len(stripped) > 40:
         return False
@@ -154,14 +174,7 @@ def _is_heading(line: str) -> bool:
         return True
     if stripped.endswith((".", ",", ";")):
         return False
-    # ALL CAPS
-    if stripped.isupper():
-        return True
-    # Title Case: every substantive word capitalised. Commas rule it out --
-    # "Python, FastAPI, PostgreSQL, Docker" is a skills line, not a heading.
-    if "," in stripped:
-        return False
-    return all(w[0].isupper() for w in words if len(w) > 3) and words[0][0].isupper()
+    return stripped.isupper()
 
 
 def _continues(prev: str, line: str) -> bool:
