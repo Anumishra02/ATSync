@@ -1,0 +1,90 @@
+{
+  "rubric_version": "1.0",
+  "_rubric": {
+    "2": "Direct evidence. A reviewer would point at this bullet to say the requirement is met.",
+    "1": "Partial or adjacent. Related work, or the right domain but the wrong specific claim. Also: a job title that asserts the skill without demonstrating it.",
+    "0": "Irrelevant to this requirement.",
+    "_guidance": [
+      "Judge the bullet against THIS requirement only, not overall candidate quality.",
+      "Do not reward keyword overlap that carries no substantive claim.",
+      "When torn between 1 and 2, ask: would a hiring manager accept this bullet alone as proof? If no, it is a 1.",
+      "Label every (requirement, bullet) pair. An omitted pair is scored 0 and is indistinguishable from a deliberate 0."
+    ]
+  },
+  "pairs": [
+    {
+      "id": "pair-example-001",
+      "annotator": "a",
+      "resume_text": "EXPERIENCE\n\nBackend Engineer Intern, Nimbus Labs\n• Built and shipped a FastAPI service handling 2M requests per day\n• Migrated the primary datastore to PostgreSQL and tuned slow joins\n• Deployed the platform on Kubernetes across three AWS regions\n• Wrote the CI/CD pipeline on GitHub Actions with automated tests\n\nPROJECTS\n\n• Implemented a streaming ingestion pipeline using Kafka topics\n• Built a React dashboard with Redux for internal reporting\n",
+      "jd_text": "About Us\n\nWe are a fast-growing fintech startup backed by top investors.\n\nRequirements\n\n• 3+ years of experience building backend services in Python\n• Must have strong SQL and relational data modelling skills\n• Experience deploying and operating containerised services in production\n\nNice to Have\n\n• Familiarity with Kafka or similar event streaming systems\n",
+      "judgements": [
+        {
+          "requirement": "3+ years of experience building backend services in Python",
+          "evidence": "Built and shipped a FastAPI service handling 2M requests per day",
+          "grade": 2,
+          "note": "FastAPI service at scale -- direct evidence of backend work in Python"
+        },
+        {
+          "requirement": "3+ years of experience building backend services in Python",
+          "evidence": "Backend Engineer Intern, Nimbus Labs",
+          "grade": 1,
+          "note": "Job title asserts the role but shows no work; title alone is partial"
+        },
+        {
+          "requirement": "3+ years of experience building backend services in Python",
+          "evidence": "Migrated the primary datastore to PostgreSQL and tuned slow joins",
+          "grade": 1,
+          "note": "Datastore migration is backend work, but the bullet is about data, not service-building"
+        },
+        {
+          "requirement": "3+ years of experience building backend services in Python",
+          "evidence": "Wrote the CI/CD pipeline on GitHub Actions with automated tests",
+          "grade": 0,
+          "note": "CI/CD is adjacent infrastructure, not evidence of building backend services"
+        },
+        {
+          "requirement": "Must have strong SQL and relational data modelling skills",
+          "evidence": "Migrated the primary datastore to PostgreSQL and tuned slow joins",
+          "grade": 2,
+          "note": "PostgreSQL migration plus join tuning is direct relational modelling evidence"
+        },
+        {
+          "requirement": "Must have strong SQL and relational data modelling skills",
+          "evidence": "Built and shipped a FastAPI service handling 2M requests per day",
+          "grade": 0,
+          "note": "FastAPI says nothing about SQL"
+        },
+        {
+          "requirement": "Experience deploying and operating containerised services in production",
+          "evidence": "Deployed the platform on Kubernetes across three AWS regions",
+          "grade": 2,
+          "note": "Kubernetes across three regions is exactly deploying containerised services in production"
+        },
+        {
+          "requirement": "Experience deploying and operating containerised services in production",
+          "evidence": "Wrote the CI/CD pipeline on GitHub Actions with automated tests",
+          "grade": 1,
+          "note": "Pipeline deploys things, but says nothing about containers or production operation"
+        },
+        {
+          "requirement": "Experience deploying and operating containerised services in production",
+          "evidence": "Built and shipped a FastAPI service handling 2M requests per day",
+          "grade": 0,
+          "note": "No deployment or container signal"
+        },
+        {
+          "requirement": "Familiarity with Kafka or similar event streaming systems",
+          "evidence": "Implemented a streaming ingestion pipeline using Kafka topics",
+          "grade": 2,
+          "note": "Kafka streaming pipeline, named directly"
+        },
+        {
+          "requirement": "Familiarity with Kafka or similar event streaming systems",
+          "evidence": "Built a React dashboard with Redux for internal reporting",
+          "grade": 0,
+          "note": "React dashboard is unrelated to streaming"
+        }
+      ]
+    }
+  ]
+}
