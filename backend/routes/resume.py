@@ -1,13 +1,24 @@
 
+from pathlib import Path
+
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from services.parser import extract_text_from_pdf
-from services.ats_scorer import calculate_ats_score
+from services.scoring import legacy_ats_score
 from services.interview import generate_interview_questions
 from services.analyzer import full_analysis
 from services.cover_letter import generate_cover_letter
+from services.matching.chunking import normalize_document_text
+from services.skills.matcher import SkillMatcher
+from services.skills.taxonomy import Taxonomy
 
 router = APIRouter()
+
+# Built once at import, not per request -- the taxonomy index gets rebuilt
+# on every SkillMatcher() construction, which is a visible per-request cost
+# at ESCO's 13.9k-skill scale.
+_SEED_PATH = Path(__file__).resolve().parent.parent / "data" / "skills_seed.json"
+_matcher = SkillMatcher(Taxonomy.from_seed_json(_SEED_PATH))
 
 
 # ── Request models ────────────────────────────────────────────────────────────
@@ -58,7 +69,11 @@ def score_resume(request: ATSRequest):
     if not request.resume_text or not request.job_description:
         raise HTTPException(status_code=400, detail="Both resume text and job description required")
 
-    result = calculate_ats_score(request.resume_text, request.job_description)
+    result = legacy_ats_score(
+        _matcher,
+        normalize_document_text(request.resume_text),
+        normalize_document_text(request.job_description),
+    )
     return result
 
 
@@ -77,12 +92,14 @@ def get_interview_questions(request: InterviewRequest):
 
 @router.post("/analyze")
 def analyze_resume(request: FullAnalysisRequest):
-    ats = calculate_ats_score(request.resume_text, request.job_description)
+    resume_text = normalize_document_text(request.resume_text)
+    job_description = normalize_document_text(request.job_description)
+    ats = legacy_ats_score(_matcher, resume_text, job_description)
     result = full_analysis(
-        request.resume_text,
+        resume_text,
         request.filename,
         request.file_size,
-        request.job_description,
+        job_description,
         ats,
     )
     return result

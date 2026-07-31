@@ -4,9 +4,21 @@ import os
 import json
 from dotenv import load_dotenv
 
+from services.matching.chunking import chunk_resume, normalize_document_text
+from services.scoring import EXPECTED_SECTIONS
+from services.scoring import check_sections as _heading_based_sections
+
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-2.5-flash")
+
+_SECTION_DISPLAY_NAMES = {
+    "experience": "Experience",
+    "education": "Education",
+    "skills": "Skills",
+    "projects": "Projects",
+    "certifications": "Certifications",
+}
 
 def check_quantification(text: str) -> dict:
     bullets = re.findall(r'[•\-\*]\s*(.+)', text)
@@ -73,12 +85,20 @@ def check_file_format(filename: str, file_size_bytes: int) -> dict:
     }
 
 def check_sections(text: str) -> dict:
+    """Section presence, from actual resume headings.
+
+    Used to regex-match the whole body for words like "developed" and
+    "work" -- so almost every resume passed almost every check regardless
+    of whether it had that section (see services/scoring.py's docstring for
+    the original finding). Now reads only lines the chunker classified as
+    headings. Return shape is unchanged so callers (full_analysis, the
+    frontend's SectionsSection) don't need to change.
+    """
+    chunks = chunk_resume(normalize_document_text(text))
+    found_map = _heading_based_sections(chunks)
     sections = {
-        "Education": bool(re.search(r'education|degree|university|college|bachelor|master', text, re.I)),
-        "Experience": bool(re.search(r'experience|work|employment|job|intern', text, re.I)),
-        "Skills": bool(re.search(r'skills|technologies|tools|languages', text, re.I)),
-        "Projects": bool(re.search(r'project|built|developed|created', text, re.I)),
-        "Certifications": bool(re.search(r'certif|award|achievement', text, re.I)),
+        _SECTION_DISPLAY_NAMES[key]: found_map.get(key, False)
+        for key in EXPECTED_SECTIONS
     }
     found = sum(sections.values())
     score = round(found / len(sections) * 100)
