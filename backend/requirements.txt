@@ -10,3 +10,4 @@ rapidfuzz==3.14.5
 pytest==9.1.1
 sentence-transformers==5.6.1
 wordfreq==3.1.1
+ftfy==6.3.1

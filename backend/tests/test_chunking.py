@@ -144,3 +144,28 @@ class TestEdgeCases:
         # Conservative by design: we would rather split than merge two units.
         text = "• Built the ingestion service\n• Owned the on-call rotation\n"
         assert len(chunk_resume(text)) == 2
+
+    def test_mojibake_bullets_are_recovered(self):
+        # A UTF-8 bullet (E2 80 A2) mis-decoded as cp1252 becomes three
+        # characters, not one -- constructed here rather than pasted, since
+        # mojibake is exactly the kind of text that doesn't survive copy
+        # -paste intact. Real source: PDFs exported from Word on Windows.
+        mojibake_bullet = "•".encode("utf-8").decode("cp1252")
+        assert len(mojibake_bullet) == 3  # the failure mode being tested
+
+        text = f"{mojibake_bullet} Built the ingestion service\n"
+        chunks = chunk_resume(text)
+        assert len(chunks) == 1
+        assert chunks[0].kind is ChunkKind.BULLET
+        assert chunks[0].text == "Built the ingestion service"
+
+        # Offsets are relative to the ftfy-fixed text, not the raw input --
+        # see chunking.py's module docstring. Like other BULLET chunks, the
+        # span covers the whole original line (glyph included); only
+        # `.text` has the glyph stripped -- same convention as
+        # test_offsets_point_into_the_original_text above.
+        import ftfy
+
+        fixed = ftfy.fix_text(text)
+        c = chunks[0]
+        assert "Built" in fixed[c.char_start : c.char_end]

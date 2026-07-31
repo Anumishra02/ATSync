@@ -18,6 +18,17 @@ Two asymmetric problems:
 Char offsets are preserved end to end so a match can be highlighted in the
 original document. That is the evidence-linking feature -- it only works if
 offsets survive every transformation from here on.
+
+One consequence of that worth being explicit about: `chunk_document` runs
+`ftfy.fix_text` on its input before computing any offsets, to repair mojibake
+(a UTF-8 bullet mis-decoded as cp1252 becomes 3 characters instead of 1 --
+common on PDFs exported from Word on Windows). Fixing it changes the
+string's length, so returned offsets are relative to the *ftfy-fixed* text,
+not necessarily byte-identical to whatever raw bytes a PDF extractor handed
+in. A caller that wants offsets to line up for highlighting must slice into
+that same fixed text, not the raw original -- in practice, fix once at
+ingestion and treat the fixed version as canonical from then on, rather than
+re-deriving it per call.
 """
 
 from __future__ import annotations
@@ -26,11 +37,11 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+import ftfy
+
 # Bullet glyphs seen in real PDF extractions, including the 'o' that Word
-# emits for second-level bullets. Does NOT handle mis-decoded (mojibake)
-# bullets from a cp1252/Latin-1 misread of UTF-8 -- no test exercises that
-# case yet, and guessing at the byte pattern without one would be worse
-# than leaving it undone. Flagged as a known gap, not silently absent.
+# emits for second-level bullets. Mis-decoded (mojibake) bullets are handled
+# upstream, by ftfy.fix_text in chunk_document, not by this pattern.
 _BULLET = re.compile(r"^\s*(?:[•‣▪●◦⁃∙*\-–—]|o(?=\s)|\d{1,2}[.)])\s+")
 _SECTION_VOCAB = {
     "experience", "work experience", "professional experience", "employment",
@@ -128,7 +139,12 @@ def _continues(prev: str, line: str) -> bool:
 
 
 def chunk_document(text: str) -> list[Chunk]:
-    """Split a resume or JD into units, preserving offsets into ``text``."""
+    """Split a resume or JD into units, preserving offsets into ``text``.
+
+    Note offsets are relative to ``ftfy.fix_text(text)``, not ``text``
+    itself -- see the module docstring.
+    """
+    text = ftfy.fix_text(text)
     chunks: list[Chunk] = []
     section: str | None = None
     buf: list[str] = []
