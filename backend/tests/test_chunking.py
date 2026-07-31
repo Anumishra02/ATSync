@@ -10,10 +10,13 @@ from __future__ import annotations
 import pytest
 
 from services.matching.chunking import (
+    ChunkedDocument,
     ChunkKind,
     Emphasis,
     chunk_job_description,
     chunk_resume,
+    normalize_document_text,
+    prepare_resume,
 )
 
 RESUME = """\
@@ -145,7 +148,17 @@ class TestEdgeCases:
         text = "• Built the ingestion service\n• Owned the on-call rotation\n"
         assert len(chunk_resume(text)) == 2
 
-    def test_mojibake_bullets_are_recovered(self):
+    def test_mojibake_bullet_is_not_recognized_without_normalizing_first(self):
+        # The precondition is real, not just documented: chunk_resume alone
+        # does not fix mojibake. If this ever starts passing, chunk_document
+        # has silently regained an internal ftfy call, which reopens the
+        # canonical-text problem the module docstring explains.
+        mojibake_bullet = "•".encode("utf-8").decode("cp1252")
+        text = f"{mojibake_bullet} Built the ingestion service\n"
+        chunks = chunk_resume(text)
+        assert chunks[0].kind is not ChunkKind.BULLET
+
+    def test_mojibake_bullets_are_recovered_after_normalizing(self):
         # A UTF-8 bullet (E2 80 A2) mis-decoded as cp1252 becomes three
         # characters, not one -- constructed here rather than pasted, since
         # mojibake is exactly the kind of text that doesn't survive copy
@@ -154,18 +167,29 @@ class TestEdgeCases:
         assert len(mojibake_bullet) == 3  # the failure mode being tested
 
         text = f"{mojibake_bullet} Built the ingestion service\n"
-        chunks = chunk_resume(text)
+        canonical = normalize_document_text(text)
+        chunks = chunk_resume(canonical)
         assert len(chunks) == 1
         assert chunks[0].kind is ChunkKind.BULLET
         assert chunks[0].text == "Built the ingestion service"
 
-        # Offsets are relative to the ftfy-fixed text, not the raw input --
-        # see chunking.py's module docstring. Like other BULLET chunks, the
-        # span covers the whole original line (glyph included); only
-        # `.text` has the glyph stripped -- same convention as
-        # test_offsets_point_into_the_original_text above.
-        import ftfy
-
-        fixed = ftfy.fix_text(text)
+        # Offsets are relative to the canonical (normalized) text, not the
+        # raw input -- see chunking.py's module docstring. Like other
+        # BULLET chunks, the span covers the whole original line (glyph
+        # included); only `.text` has the glyph stripped -- same convention
+        # as test_offsets_point_into_the_original_text above.
         c = chunks[0]
-        assert "Built" in fixed[c.char_start : c.char_end]
+        assert "Built" in canonical[c.char_start : c.char_end]
+
+    def test_prepare_resume_bundles_canonical_text_with_chunks(self):
+        mojibake_bullet = "•".encode("utf-8").decode("cp1252")
+        text = f"{mojibake_bullet} Built the ingestion service\n"
+
+        doc = prepare_resume(text)
+        assert isinstance(doc, ChunkedDocument)
+        assert doc.canonical_text == normalize_document_text(text)
+        assert len(doc.chunks) == 1
+        assert doc.chunks[0].kind is ChunkKind.BULLET
+        # The whole point: chunk offsets are valid against canonical_text.
+        c = doc.chunks[0]
+        assert "Built" in doc.canonical_text[c.char_start : c.char_end]

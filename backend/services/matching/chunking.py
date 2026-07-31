@@ -17,18 +17,26 @@ Two asymmetric problems:
 
 Char offsets are preserved end to end so a match can be highlighted in the
 original document. That is the evidence-linking feature -- it only works if
-offsets survive every transformation from here on.
+offsets survive every transformation from here on, which is also why
+normalization is a separate, explicit step rather than something buried
+inside chunking.
 
-One consequence of that worth being explicit about: `chunk_document` runs
-`ftfy.fix_text` on its input before computing any offsets, to repair mojibake
-(a UTF-8 bullet mis-decoded as cp1252 becomes 3 characters instead of 1 --
-common on PDFs exported from Word on Windows). Fixing it changes the
-string's length, so returned offsets are relative to the *ftfy-fixed* text,
-not necessarily byte-identical to whatever raw bytes a PDF extractor handed
-in. A caller that wants offsets to line up for highlighting must slice into
-that same fixed text, not the raw original -- in practice, fix once at
-ingestion and treat the fixed version as canonical from then on, rather than
-re-deriving it per call.
+`normalize_document_text` repairs mojibake (a UTF-8 bullet mis-decoded as
+cp1252 becomes 3 characters instead of 1 -- common on PDFs exported from
+Word on Windows) via `ftfy.fix_text`. Because that changes the string's
+length, offsets computed by `chunk_document` are only meaningful relative to
+already-normalized text -- `chunk_document` therefore *requires* normalized
+input (a precondition, not a step it performs) rather than normalizing
+internally. Normalizing inside chunking would make it silently safe to call
+with raw text once, but silently WRONG the moment any other code
+(rendering, highlighting, a second pipeline stage) touches the same
+document and doesn't normalize identically -- the raw text and the chunk
+offsets would then disagree about what "the document" is, and nothing would
+signal the mismatch. Normalize once, at ingestion, treat the result as the
+only version of the document that exists from then on. `prepare_resume` /
+`prepare_job_description` below do exactly that and hand back the
+normalized text bundled with its chunks, so a caller physically cannot have
+one without the other.
 """
 
 from __future__ import annotations
@@ -40,8 +48,9 @@ from enum import Enum
 import ftfy
 
 # Bullet glyphs seen in real PDF extractions, including the 'o' that Word
-# emits for second-level bullets. Mis-decoded (mojibake) bullets are handled
-# upstream, by ftfy.fix_text in chunk_document, not by this pattern.
+# emits for second-level bullets. Mis-decoded (mojibake) bullets are only
+# matched after normalize_document_text has already run -- see the module
+# docstring.
 _BULLET = re.compile(r"^\s*(?:[•‣▪●◦⁃∙*\-–—]|o(?=\s)|\d{1,2}[.)])\s+")
 _SECTION_VOCAB = {
     "experience", "work experience", "professional experience", "employment",
@@ -98,6 +107,31 @@ class Chunk:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class ChunkedDocument:
+    """A document's canonical (normalized) text, bundled with its chunks.
+
+    Exists so a caller cannot end up with chunks whose offsets it can't
+    correctly slice into -- `canonical_text` is the *only* text those
+    offsets are valid against. Highlighting, storage, and re-display should
+    all use `canonical_text`, never whatever raw text the document arrived
+    as.
+    """
+
+    canonical_text: str
+    chunks: list[Chunk]
+
+
+def normalize_document_text(text: str) -> str:
+    """Repair mojibake and other encoding damage. Run this once, at ingestion.
+
+    Not run automatically by chunk_document -- see the module docstring for
+    why baking normalization into chunking would be worse than requiring it
+    explicitly.
+    """
+    return ftfy.fix_text(text)
+
+
 def _is_heading(line: str) -> bool:
     """Headings are short, unpunctuated, and usually shouty."""
     stripped = line.strip().rstrip(":")
@@ -141,10 +175,9 @@ def _continues(prev: str, line: str) -> bool:
 def chunk_document(text: str) -> list[Chunk]:
     """Split a resume or JD into units, preserving offsets into ``text``.
 
-    Note offsets are relative to ``ftfy.fix_text(text)``, not ``text``
-    itself -- see the module docstring.
+    Precondition: ``text`` is already normalized (``normalize_document_text``).
+    This function does not normalize -- see the module docstring for why.
     """
-    text = ftfy.fix_text(text)
     chunks: list[Chunk] = []
     section: str | None = None
     buf: list[str] = []
@@ -239,3 +272,15 @@ def chunk_job_description(text: str) -> list[Chunk]:
 def chunk_resume(text: str) -> list[Chunk]:
     """Chunk a resume. Emphasis is not meaningful here, so it stays unset."""
     return chunk_document(text)
+
+
+def prepare_resume(text: str) -> ChunkedDocument:
+    """Normalize, then chunk. The entry point real callers should use."""
+    canonical = normalize_document_text(text)
+    return ChunkedDocument(canonical_text=canonical, chunks=chunk_resume(canonical))
+
+
+def prepare_job_description(text: str) -> ChunkedDocument:
+    """Normalize, then chunk. The entry point real callers should use."""
+    canonical = normalize_document_text(text)
+    return ChunkedDocument(canonical_text=canonical, chunks=chunk_job_description(canonical))
