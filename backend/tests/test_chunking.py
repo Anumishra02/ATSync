@@ -193,3 +193,20 @@ class TestEdgeCases:
         # The whole point: chunk offsets are valid against canonical_text.
         c = doc.chunks[0]
         assert "Built" in doc.canonical_text[c.char_start : c.char_end]
+
+
+class TestScorableFloor:
+    def test_terse_jd_bullets_survive(self):
+        """Stack lists are requirements, not noise.
+
+        A blanket three-word floor dropped every one of these silently --
+        found via the scoring service, not by reading the chunker.
+        """
+        jd = "Requirements\n\n• Java\n• Spring Boot\n• MySQL\n"
+        scorable = [c.text for c in chunk_job_description(jd) if c.is_scorable]
+        assert scorable == ["Java", "Spring Boot", "MySQL"]
+
+    def test_one_word_resume_fragments_are_still_noise(self):
+        resume = "EXPERIENCE\n\n• Shipped\n• Built a FastAPI service in Python\n"
+        scorable = [c.text for c in chunk_resume(resume) if c.is_scorable]
+        assert scorable == ["Built a FastAPI service in Python"]

@@ -98,12 +98,19 @@ class Chunk:
     index: int
     emphasis: Emphasis = Emphasis.UNSPECIFIED
 
+    # Minimum words for a chunk to be worth scoring. Asymmetric on purpose:
+    # a one-word resume fragment is noise, but a JD bullet that says only
+    # "Kubernetes" is a complete requirement. Terse stack lists ("• Java",
+    # "• Spring", "• MySQL") are extremely common in job postings, and a
+    # blanket three-word floor drops every one of them silently.
+    min_words: int = 3
+
     @property
     def is_scorable(self) -> bool:
         return (
             self.kind is not ChunkKind.HEADING
             and self.emphasis is not Emphasis.BOILERPLATE
-            and len(self.text.split()) >= 3
+            and len(self.text.split()) >= self.min_words
         )
 
 
@@ -258,12 +265,18 @@ def classify_emphasis(chunk: Chunk) -> Emphasis:
 
 
 def chunk_job_description(text: str) -> list[Chunk]:
-    """Chunk a JD and tag each unit with its emphasis."""
+    """Chunk a JD and tag each unit with its emphasis.
+
+    min_words=1: JD bullets are frequently terse stack lists ("Java",
+    "Spring Boot", "MySQL") that are complete requirements on their own --
+    see Chunk.min_words.
+    """
     return [
         Chunk(
             text=c.text, kind=c.kind, section=c.section,
             char_start=c.char_start, char_end=c.char_end,
             index=c.index, emphasis=classify_emphasis(c),
+            min_words=1,
         )
         for c in chunk_document(text)
     ]
