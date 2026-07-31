@@ -1,0 +1,791 @@
+[
+  {
+    "id": "python",
+    "canonical": "Python",
+    "category": "language"
+  },
+  {
+    "id": "javascript",
+    "canonical": "JavaScript",
+    "aliases": [
+      "JS",
+      "ECMAScript"
+    ],
+    "category": "language"
+  },
+  {
+    "id": "typescript",
+    "canonical": "TypeScript",
+    "aliases": [
+      "TS"
+    ],
+    "category": "language"
+  },
+  {
+    "id": "java",
+    "canonical": "Java",
+    "aliases": [
+      "Java SE",
+      "Core Java"
+    ],
+    "category": "language",
+    "ambiguous_forms": [
+      "Java"
+    ],
+    "context_cues": [
+      "spring",
+      "jvm",
+      "kotlin",
+      "programming",
+      "language",
+      "backend",
+      "oop",
+      "developer",
+      "engineer",
+      "maven",
+      "gradle",
+      "hibernate",
+      "junit",
+      "android",
+      "servlet",
+      "c++",
+      "python",
+      "scala",
+      "microservices",
+      "se"
+    ]
+  },
+  {
+    "id": "cpp",
+    "canonical": "C++",
+    "aliases": [
+      "CPP",
+      "C plus plus"
+    ],
+    "category": "language"
+  },
+  {
+    "id": "csharp",
+    "canonical": "C#",
+    "aliases": [
+      "C sharp",
+      "dotnet",
+      ".NET"
+    ],
+    "category": "language"
+  },
+  {
+    "id": "go",
+    "canonical": "Go",
+    "aliases": [
+      "Golang"
+    ],
+    "category": "language",
+    "context_cues": [
+      "golang",
+      "programming",
+      "language",
+      "backend",
+      "microservices",
+      "concurrency",
+      "goroutine",
+      "developer",
+      "engineer",
+      "docker",
+      "kubernetes",
+      "rust",
+      "python",
+      "java"
+    ],
+    "ambiguous_forms": [
+      "Go"
+    ]
+  },
+  {
+    "id": "rust",
+    "canonical": "Rust",
+    "category": "language",
+    "context_cues": [
+      "programming",
+      "language",
+      "systems",
+      "cargo",
+      "memory",
+      "backend",
+      "go",
+      "c++",
+      "developer",
+      "engineer"
+    ],
+    "ambiguous_forms": [
+      "Rust"
+    ]
+  },
+  {
+    "id": "sql",
+    "canonical": "SQL",
+    "category": "language"
+  },
+  {
+    "id": "bash",
+    "canonical": "Bash",
+    "aliases": [
+      "Shell scripting",
+      "Shell"
+    ],
+    "category": "language"
+  },
+  {
+    "id": "react",
+    "canonical": "React",
+    "aliases": [
+      "React.js",
+      "ReactJS"
+    ],
+    "category": "frontend"
+  },
+  {
+    "id": "nextjs",
+    "canonical": "Next.js",
+    "aliases": [
+      "NextJS",
+      "Next js"
+    ],
+    "category": "frontend"
+  },
+  {
+    "id": "vue",
+    "canonical": "Vue",
+    "aliases": [
+      "Vue.js",
+      "VueJS"
+    ],
+    "category": "frontend"
+  },
+  {
+    "id": "angular",
+    "canonical": "Angular",
+    "aliases": [
+      "AngularJS"
+    ],
+    "category": "frontend"
+  },
+  {
+    "id": "tailwind",
+    "canonical": "Tailwind CSS",
+    "aliases": [
+      "Tailwind",
+      "TailwindCSS"
+    ],
+    "category": "frontend"
+  },
+  {
+    "id": "html",
+    "canonical": "HTML",
+    "aliases": [
+      "HTML5"
+    ],
+    "category": "frontend"
+  },
+  {
+    "id": "css",
+    "canonical": "CSS",
+    "aliases": [
+      "CSS3"
+    ],
+    "category": "frontend"
+  },
+  {
+    "id": "redux",
+    "canonical": "Redux",
+    "category": "frontend"
+  },
+  {
+    "id": "webpack",
+    "canonical": "Webpack",
+    "category": "frontend"
+  },
+  {
+    "id": "vite",
+    "canonical": "Vite",
+    "category": "frontend"
+  },
+  {
+    "id": "nodejs",
+    "canonical": "Node.js",
+    "aliases": [
+      "NodeJS",
+      "Node"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "express",
+    "canonical": "Express.js",
+    "aliases": [
+      "Express",
+      "ExpressJS"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "fastapi",
+    "canonical": "FastAPI",
+    "category": "backend"
+  },
+  {
+    "id": "django",
+    "canonical": "Django",
+    "category": "backend"
+  },
+  {
+    "id": "flask",
+    "canonical": "Flask",
+    "category": "backend"
+  },
+  {
+    "id": "spring",
+    "canonical": "Spring Boot",
+    "aliases": [
+      "Spring",
+      "SpringBoot"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "graphql",
+    "canonical": "GraphQL",
+    "category": "backend"
+  },
+  {
+    "id": "rest-api",
+    "canonical": "REST API",
+    "aliases": [
+      "RESTful API",
+      "RESTful APIs",
+      "REST APIs",
+      "RESTful web services",
+      "REST"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "grpc",
+    "canonical": "gRPC",
+    "category": "backend"
+  },
+  {
+    "id": "websockets",
+    "canonical": "WebSockets",
+    "aliases": [
+      "WebSocket",
+      "Socket.IO",
+      "SocketIO"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "microservices",
+    "canonical": "Microservices",
+    "aliases": [
+      "Microservice architecture"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "jwt",
+    "canonical": "JWT",
+    "aliases": [
+      "JSON Web Token",
+      "JSON Web Tokens"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "oauth",
+    "canonical": "OAuth",
+    "aliases": [
+      "OAuth2",
+      "OAuth 2.0"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "rbac",
+    "canonical": "RBAC",
+    "aliases": [
+      "Role-based access control"
+    ],
+    "category": "backend"
+  },
+  {
+    "id": "postgresql",
+    "canonical": "PostgreSQL",
+    "aliases": [
+      "Postgres"
+    ],
+    "category": "database"
+  },
+  {
+    "id": "mysql",
+    "canonical": "MySQL",
+    "category": "database"
+  },
+  {
+    "id": "mongodb",
+    "canonical": "MongoDB",
+    "aliases": [
+      "Mongo"
+    ],
+    "category": "database"
+  },
+  {
+    "id": "redis",
+    "canonical": "Redis",
+    "category": "database"
+  },
+  {
+    "id": "elasticsearch",
+    "canonical": "Elasticsearch",
+    "aliases": [
+      "Elastic Search",
+      "ELK"
+    ],
+    "category": "database"
+  },
+  {
+    "id": "sqlite",
+    "canonical": "SQLite",
+    "category": "database"
+  },
+  {
+    "id": "pgvector",
+    "canonical": "pgvector",
+    "category": "database"
+  },
+  {
+    "id": "docker",
+    "canonical": "Docker",
+    "aliases": [
+      "Containerization",
+      "Containers"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "kubernetes",
+    "canonical": "Kubernetes",
+    "aliases": [
+      "K8s",
+      "Container orchestration"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "aws",
+    "canonical": "AWS",
+    "aliases": [
+      "Amazon Web Services"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "gcp",
+    "canonical": "GCP",
+    "aliases": [
+      "Google Cloud",
+      "Google Cloud Platform"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "azure",
+    "canonical": "Azure",
+    "aliases": [
+      "Microsoft Azure"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "terraform",
+    "canonical": "Terraform",
+    "aliases": [
+      "Infrastructure as Code",
+      "IaC"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "cicd",
+    "canonical": "CI/CD",
+    "aliases": [
+      "Continuous Integration",
+      "Continuous Delivery",
+      "Continuous Deployment"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "git",
+    "canonical": "Git",
+    "aliases": [
+      "Version control"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "github-actions",
+    "canonical": "GitHub Actions",
+    "category": "devops"
+  },
+  {
+    "id": "jenkins",
+    "canonical": "Jenkins",
+    "category": "devops"
+  },
+  {
+    "id": "linux",
+    "canonical": "Linux",
+    "aliases": [
+      "Unix"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "nginx",
+    "canonical": "Nginx",
+    "category": "devops"
+  },
+  {
+    "id": "kafka",
+    "canonical": "Apache Kafka",
+    "aliases": [
+      "Kafka"
+    ],
+    "category": "devops"
+  },
+  {
+    "id": "celery",
+    "canonical": "Celery",
+    "category": "devops"
+  },
+  {
+    "id": "machine-learning",
+    "canonical": "Machine Learning",
+    "aliases": [
+      "ML"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "deep-learning",
+    "canonical": "Deep Learning",
+    "category": "ml"
+  },
+  {
+    "id": "nlp",
+    "canonical": "Natural Language Processing",
+    "aliases": [
+      "NLP"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "computer-vision",
+    "canonical": "Computer Vision",
+    "aliases": [
+      "CV"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "pytorch",
+    "canonical": "PyTorch",
+    "aliases": [
+      "Torch"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "tensorflow",
+    "canonical": "TensorFlow",
+    "aliases": [
+      "Keras"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "scikit-learn",
+    "canonical": "scikit-learn",
+    "aliases": [
+      "sklearn",
+      "Scikit learn"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "pandas",
+    "canonical": "pandas",
+    "category": "ml"
+  },
+  {
+    "id": "numpy",
+    "canonical": "NumPy",
+    "category": "ml"
+  },
+  {
+    "id": "xgboost",
+    "canonical": "XGBoost",
+    "aliases": [
+      "Gradient boosting"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "transformers",
+    "canonical": "Transformers",
+    "aliases": [
+      "Hugging Face",
+      "HuggingFace"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "embeddings",
+    "canonical": "Embeddings",
+    "aliases": [
+      "Vector embeddings",
+      "Sentence embeddings"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "rag",
+    "canonical": "RAG",
+    "aliases": [
+      "Retrieval Augmented Generation",
+      "Retrieval-Augmented Generation"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "llm",
+    "canonical": "LLM",
+    "aliases": [
+      "Large Language Model",
+      "Large Language Models"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "information-retrieval",
+    "canonical": "Information Retrieval",
+    "aliases": [
+      "IR",
+      "Search ranking",
+      "Semantic search"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "recommender-systems",
+    "canonical": "Recommender Systems",
+    "aliases": [
+      "Collaborative filtering",
+      "Recommendation engine"
+    ],
+    "category": "ml"
+  },
+  {
+    "id": "mlops",
+    "canonical": "MLOps",
+    "category": "ml"
+  },
+  {
+    "id": "spark",
+    "canonical": "Apache Spark",
+    "aliases": [
+      "Spark",
+      "PySpark"
+    ],
+    "category": "ml",
+    "context_cues": [
+      "apache",
+      "pyspark",
+      "hadoop",
+      "scala",
+      "big data",
+      "etl",
+      "cluster",
+      "databricks",
+      "streaming"
+    ],
+    "ambiguous_forms": [
+      "Spark"
+    ]
+  },
+  {
+    "id": "data-structures",
+    "canonical": "Data Structures",
+    "category": "cs"
+  },
+  {
+    "id": "algorithms",
+    "canonical": "Algorithms",
+    "aliases": [
+      "Algorithm design"
+    ],
+    "category": "cs"
+  },
+  {
+    "id": "oop",
+    "canonical": "Object-Oriented Programming",
+    "aliases": [
+      "OOP",
+      "Object Oriented Design",
+      "OOD"
+    ],
+    "category": "cs"
+  },
+  {
+    "id": "system-design",
+    "canonical": "System Design",
+    "aliases": [
+      "Distributed systems"
+    ],
+    "category": "cs"
+  },
+  {
+    "id": "operating-systems",
+    "canonical": "Operating Systems",
+    "aliases": [
+      "OS"
+    ],
+    "category": "cs"
+  },
+  {
+    "id": "dbms",
+    "canonical": "DBMS",
+    "aliases": [
+      "Database Management Systems"
+    ],
+    "category": "cs"
+  },
+  {
+    "id": "computer-networks",
+    "canonical": "Computer Networks",
+    "aliases": [
+      "Networking",
+      "TCP/IP"
+    ],
+    "category": "cs"
+  },
+  {
+    "id": "testing",
+    "canonical": "Unit Testing",
+    "aliases": [
+      "pytest",
+      "Jest",
+      "Test automation",
+      "TDD"
+    ],
+    "category": "cs"
+  },
+  {
+    "id": "agile",
+    "canonical": "Agile",
+    "aliases": [
+      "Scrum",
+      "Kanban"
+    ],
+    "category": "process"
+  },
+  {
+    "id": "figma",
+    "canonical": "Figma",
+    "category": "design"
+  },
+  {
+    "id": "ux-design",
+    "canonical": "UX Design",
+    "aliases": [
+      "User Experience Design",
+      "UI/UX"
+    ],
+    "category": "design"
+  },
+  {
+    "id": "excel",
+    "canonical": "Microsoft Excel",
+    "aliases": [
+      "Excel",
+      "Advanced Excel"
+    ],
+    "category": "business",
+    "context_cues": [
+      "microsoft",
+      "spreadsheet",
+      "pivot",
+      "vlookup",
+      "macro",
+      "office",
+      "powerpoint",
+      "word",
+      "data",
+      "reporting",
+      "analysis"
+    ],
+    "ambiguous_forms": [
+      "Excel"
+    ]
+  },
+  {
+    "id": "tableau",
+    "canonical": "Tableau",
+    "category": "business"
+  },
+  {
+    "id": "power-bi",
+    "canonical": "Power BI",
+    "aliases": [
+      "PowerBI"
+    ],
+    "category": "business"
+  },
+  {
+    "id": "ga4",
+    "canonical": "Google Analytics 4",
+    "aliases": [
+      "GA4",
+      "Google Analytics"
+    ],
+    "category": "business"
+  },
+  {
+    "id": "seo",
+    "canonical": "SEO",
+    "aliases": [
+      "Search Engine Optimization"
+    ],
+    "category": "business"
+  },
+  {
+    "id": "stakeholder-management",
+    "canonical": "Stakeholder Management",
+    "category": "soft"
+  },
+  {
+    "id": "communication",
+    "canonical": "Communication",
+    "aliases": [
+      "Written communication",
+      "Verbal communication"
+    ],
+    "category": "soft"
+  },
+  {
+    "id": "problem-solving",
+    "canonical": "Problem Solving",
+    "category": "soft"
+  }
+]

@@ -1,0 +1,395 @@
+{
+  "_about": {
+    "purpose": "Measure the fuzzy tier (tier 2) with graded typos. The original set was saturated: recall stayed 1.000 from threshold 80 to 96, so the sweep was flat and could not justify the 88.0 default.",
+    "positives": "Synthetic typos at controlled edit distance 1/2/3, embedded in realistic carrier sentences.",
+    "hard_negatives": "Real English words common in resumes that sit within small edit distance of a skill name ('was'/aws, 'get'/git, 'code'/node, 'reacts'/react, 'trust'/rust).",
+    "reading_the_result": "A useful threshold recovers most distance-1 typos, some distance-2, and rejects the hard negatives. If recall is flat across thresholds the set is saturated again."
+  },
+  "positives": [
+    {
+      "text": "Deployed the platform on kuberrnetes across three regions.",
+      "skills": ["kubernetes"],
+      "edit_distance": 1,
+      "typo": "kuberrnetes",
+      "of": "kubernetes"
+    },
+    {
+      "text": "Deployed the platform on kuberetes across three regions.",
+      "skills": ["kubernetes"],
+      "edit_distance": 2,
+      "typo": "kuberetes",
+      "of": "kubernetes"
+    },
+    {
+      "text": "Deployed the platform on xubberntes across three regions.",
+      "skills": ["kubernetes"],
+      "edit_distance": 3,
+      "typo": "xubberntes",
+      "of": "kubernetes"
+    },
+    {
+      "text": "Migrated the primary datastore to postgrseql last year.",
+      "skills": ["postgresql"],
+      "edit_distance": 1,
+      "typo": "postgrseql",
+      "of": "postgresql"
+    },
+    {
+      "text": "Migrated the primary datastore to ostgreql last year.",
+      "skills": ["postgresql"],
+      "edit_distance": 2,
+      "typo": "ostgreql",
+      "of": "postgresql"
+    },
+    {
+      "text": "Migrated the primary datastore to pogrexql last year.",
+      "skills": ["postgresql"],
+      "edit_distance": 3,
+      "typo": "pogrexql",
+      "of": "postgresql"
+    },
+    {
+      "text": "Wrote the client entirely in javaxcript and TypeScript.",
+      "skills": ["javascript"],
+      "edit_distance": 1,
+      "typo": "javaxcript",
+      "of": "javascript"
+    },
+    {
+      "text": "Wrote the client entirely in jaaavascript and TypeScript.",
+      "skills": ["javascript"],
+      "edit_distance": 2,
+      "typo": "jaaavascript",
+      "of": "javascript"
+    },
+    {
+      "text": "Wrote the client entirely in ajvascxript and TypeScript.",
+      "skills": ["javascript"],
+      "edit_distance": 3,
+      "typo": "ajvascxript",
+      "of": "javascript"
+    },
+    {
+      "text": "Streamed change events through akfka into the warehouse.",
+      "skills": ["kafka"],
+      "edit_distance": 1,
+      "typo": "akfka",
+      "of": "kafka"
+    },
+    {
+      "text": "Streamed change events through kaaxka into the warehouse.",
+      "skills": ["kafka"],
+      "edit_distance": 2,
+      "typo": "kaaxka",
+      "of": "kafka"
+    },
+    {
+      "text": "Streamed change events through kfa into the warehouse.",
+      "skills": ["kafka"],
+      "edit_distance": 3,
+      "typo": "kfa",
+      "of": "kafka"
+    },
+    {
+      "text": "Provisioned every environment with etrraform modules.",
+      "skills": ["terraform"],
+      "edit_distance": 1,
+      "typo": "etrraform",
+      "of": "terraform"
+    },
+    {
+      "text": "Provisioned every environment with trraform modules.",
+      "skills": ["terraform"],
+      "edit_distance": 2,
+      "typo": "trraform",
+      "of": "terraform"
+    },
+    {
+      "text": "Provisioned every environment with rteraform modules.",
+      "skills": ["terraform"],
+      "edit_distance": 3,
+      "typo": "rteraform",
+      "of": "terraform"
+    },
+    {
+      "text": "Indexed 40M documents in elastcisearch for the search page.",
+      "skills": ["elasticsearch"],
+      "edit_distance": 1,
+      "typo": "elastcisearch",
+      "of": "elasticsearch"
+    },
+    {
+      "text": "Indexed 40M documents in lxasticsearch for the search page.",
+      "skills": ["elasticsearch"],
+      "edit_distance": 2,
+      "typo": "lxasticsearch",
+      "of": "elasticsearch"
+    },
+    {
+      "text": "Indexed 40M documents in elastticseaxrch for the search page.",
+      "skills": ["elasticsearch"],
+      "edit_distance": 3,
+      "typo": "elastticseaxrch",
+      "of": "elasticsearch"
+    },
+    {
+      "text": "Split the monolith into micrservices behind a gateway.",
+      "skills": ["microservices"],
+      "edit_distance": 1,
+      "typo": "micrservices",
+      "of": "microservices"
+    },
+    {
+      "text": "Split the monolith into mmciroservices behind a gateway.",
+      "skills": ["microservices"],
+      "edit_distance": 2,
+      "typo": "mmciroservices",
+      "of": "microservices"
+    },
+    {
+      "text": "Split the monolith into miccrosrvicces behind a gateway.",
+      "skills": ["microservices"],
+      "edit_distance": 3,
+      "typo": "miccrosrvicces",
+      "of": "microservices"
+    },
+    {
+      "text": "Trained the classifier in tensrflow on a GPU box.",
+      "skills": ["tensorflow"],
+      "edit_distance": 1,
+      "typo": "tensrflow",
+      "of": "tensorflow"
+    },
+    {
+      "text": "Trained the classifier in nsorflow on a GPU box.",
+      "skills": ["tensorflow"],
+      "edit_distance": 2,
+      "typo": "nsorflow",
+      "of": "tensorflow"
+    },
+    {
+      "text": "Trained the classifier in etnsoflow on a GPU box.",
+      "skills": ["tensorflow"],
+      "edit_distance": 3,
+      "typo": "etnsoflow",
+      "of": "tensorflow"
+    },
+    {
+      "text": "Built the admin portal with djxngo and Celery.",
+      "skills": ["django"],
+      "edit_distance": 1,
+      "typo": "djxngo",
+      "of": "django"
+    },
+    {
+      "text": "Built the admin portal with ddjagno and Celery.",
+      "skills": ["django"],
+      "edit_distance": 2,
+      "typo": "ddjagno",
+      "of": "django"
+    },
+    {
+      "text": "Built the admin portal with dngo and Celery.",
+      "skills": ["django"],
+      "edit_distance": 3,
+      "typo": "dngo",
+      "of": "django"
+    },
+    {
+      "text": "Terminated TLS at ngxnx in front of the app servers.",
+      "skills": ["nginx"],
+      "edit_distance": 1,
+      "typo": "ngxnx",
+      "of": "nginx"
+    },
+    {
+      "text": "Terminated TLS at ngiiinx in front of the app servers.",
+      "skills": ["nginx"],
+      "edit_distance": 2,
+      "typo": "ngiiinx",
+      "of": "nginx"
+    },
+    {
+      "text": "Terminated TLS at nxgnx in front of the app servers.",
+      "skills": ["nginx"],
+      "edit_distance": 3,
+      "typo": "nxgnx",
+      "of": "nginx"
+    },
+    {
+      "text": "Managed client state with edux and middleware.",
+      "skills": ["redux"],
+      "edit_distance": 1,
+      "typo": "edux",
+      "of": "redux"
+    },
+    {
+      "text": "Managed client state with rerxux and middleware.",
+      "skills": ["redux"],
+      "edit_distance": 3,
+      "typo": "rerxux",
+      "of": "redux"
+    },
+    {
+      "text": "Ran nightly builds on jenkns before we moved to Actions.",
+      "skills": ["jenkins"],
+      "edit_distance": 1,
+      "typo": "jenkns",
+      "of": "jenkins"
+    },
+    {
+      "text": "Ran nightly builds on jknins before we moved to Actions.",
+      "skills": ["jenkins"],
+      "edit_distance": 2,
+      "typo": "jknins",
+      "of": "jenkins"
+    },
+    {
+      "text": "Ran nightly builds on jenkxns before we moved to Actions.",
+      "skills": ["jenkins"],
+      "edit_distance": 3,
+      "typo": "jenkxns",
+      "of": "jenkins"
+    },
+    {
+      "text": "Cut bundle size by tuning the webpxck config.",
+      "skills": ["webpack"],
+      "edit_distance": 1,
+      "typo": "webpxck",
+      "of": "webpack"
+    },
+    {
+      "text": "Cut bundle size by tuning the wxback config.",
+      "skills": ["webpack"],
+      "edit_distance": 2,
+      "typo": "wxback",
+      "of": "webpack"
+    },
+    {
+      "text": "Cut bundle size by tuning the webppack config.",
+      "skills": ["webpack"],
+      "edit_distance": 3,
+      "typo": "webppack",
+      "of": "webpack"
+    },
+    {
+      "text": "Prototyped the model in pyxorch then exported to ONNX.",
+      "skills": ["pytorch"],
+      "edit_distance": 1,
+      "typo": "pyxorch",
+      "of": "pytorch"
+    },
+    {
+      "text": "Prototyped the model in ptyxrch then exported to ONNX.",
+      "skills": ["pytorch"],
+      "edit_distance": 2,
+      "typo": "ptyxrch",
+      "of": "pytorch"
+    },
+    {
+      "text": "Prototyped the model in oytrch then exported to ONNX.",
+      "skills": ["pytorch"],
+      "edit_distance": 3,
+      "typo": "oytrch",
+      "of": "pytorch"
+    },
+    {
+      "text": "Strong grounding in data structures and xlgorithms.",
+      "skills": ["algorithms"],
+      "edit_distance": 1,
+      "typo": "xlgorithms",
+      "of": "algorithms"
+    },
+    {
+      "text": "Strong grounding in data structures and algroitxms.",
+      "skills": ["algorithms"],
+      "edit_distance": 2,
+      "typo": "algroitxms",
+      "of": "algorithms"
+    },
+    {
+      "text": "Strong grounding in data structures and xlgoorxthms.",
+      "skills": ["algorithms"],
+      "edit_distance": 3,
+      "typo": "xlgoorxthms",
+      "of": "algorithms"
+    }
+  ],
+  "hard_negatives": [
+    {
+      "text": "Everything was delivered ahead of the deadline.",
+      "skills": [],
+      "traps": ["aws"]
+    },
+    {
+      "text": "Helped the team get unblocked within the hour.",
+      "skills": [],
+      "traps": ["git"]
+    },
+    {
+      "text": "Reviewed every line of code before release.",
+      "skills": [],
+      "traps": ["node"]
+    },
+    {
+      "text": "The dashboard reacts instantly to filter changes.",
+      "skills": [],
+      "traps": ["react"]
+    },
+    {
+      "text": "I trust the team to make the call without me.",
+      "skills": [],
+      "traps": ["rust"]
+    },
+    {
+      "text": "Reduced churn and increased customer reach.",
+      "skills": [],
+      "traps": ["react"]
+    },
+    {
+      "text": "Ran the reporting cadence for the whole quarter.",
+      "skills": [],
+      "traps": ["rag"]
+    },
+    {
+      "text": "Wrote clear specs that the team could act on.",
+      "skills": [],
+      "traps": ["cicd"]
+    },
+    {
+      "text": "Led the testing effort across three squads.",
+      "skills": [],
+      "traps": ["testing"]
+    },
+    {
+      "text": "Drafted the sales deck for the funding round.",
+      "skills": [],
+      "traps": ["spark"]
+    },
+    {
+      "text": "Kept costs flat while doubling traffic.",
+      "skills": [],
+      "traps": ["cicd"]
+    },
+    {
+      "text": "Handled escalations from enterprise accounts.",
+      "skills": [],
+      "traps": ["elasticsearch"]
+    },
+    {
+      "text": "The scope crept badly in the second sprint.",
+      "skills": [],
+      "traps": ["spring"]
+    },
+    {
+      "text": "Shipped a redesign of the landing page.",
+      "skills": [],
+      "traps": ["redis"]
+    },
+    {
+      "text": "Coached two juniors through their first quarter.",
+      "skills": [],
+      "traps": ["go"]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "_about": {
+    "purpose": "Validate tier 3 (semantic). Every positive case is phrased so tiers 1 and 2 CANNOT fire: the skill is never named literally and no surface form is within fuzzy distance. Every negative case is chosen because it embeds close to a skill it does not represent.",
+    "why_it_exists": "The original 20-snippet set was saturated by tiers 1+2 (recall 1.000), so it could not measure tier 3 at all. A benchmark the baseline nearly solves is a benchmark with no signal left.",
+    "labelling_protocol": "Two annotators label independently, blind to model output. Disagreements are resolved by discussion and the pre-resolution labels are kept for Cohen's kappa. Do NOT label by running the model and agreeing with it.",
+    "taxonomy_ids": "data/skills_seed.json"
+  },
+
+  "positives": [
+    {"text": "Orchestrated containerised workloads across a multi-node cluster.", "skills": ["kubernetes"]},
+    {"text": "Packaged each service into an isolated, reproducible runtime image.", "skills": ["docker"]},
+    {"text": "Every merge request automatically triggers a build, test and release run.", "skills": ["cicd"]},
+    {"text": "Trained multi-layer neural networks on GPU hardware for image classification.", "skills": ["deep-learning", "computer-vision"]},
+    {"text": "Implemented nearest-neighbour lookup over dense vector representations of documents.", "skills": ["embeddings", "information-retrieval"]},
+    {"text": "Wrote declarative configuration that provisions cloud resources reproducibly.", "skills": ["terraform"]},
+    {"text": "Designed normalised schemas and tuned slow multi-table joins.", "skills": ["sql", "dbms"]},
+    {"text": "Split a monolith into independently deployable, separately scaled services.", "skills": ["microservices"]},
+    {"text": "Built a system that suggests items a user is likely to want next.", "skills": ["recommender-systems"]},
+    {"text": "Grounded model answers in retrieved passages from a document corpus.", "skills": ["rag"]},
+    {"text": "Automated regression checks that run on every commit before merge.", "skills": ["testing", "cicd"]},
+    {"text": "Processed terabyte-scale datasets across a distributed compute cluster.", "skills": ["spark"]},
+    {"text": "Issued signed, stateless tokens so services could verify callers without a session store.", "skills": ["jwt"]},
+    {"text": "Restricted which actions each class of user could perform on which resources.", "skills": ["rbac"]},
+    {"text": "Sat in front of the app servers, terminating TLS and balancing load.", "skills": ["nginx"]},
+    {"text": "Extracted entities and sentiment from unstructured customer feedback text.", "skills": ["nlp"]},
+    {"text": "Ran two-week iterations with a planning session and a retrospective each cycle.", "skills": ["agile"]},
+    {"text": "Kept an in-memory key-value store in front of the database to cut read latency.", "skills": ["redis"]},
+    {"text": "Interviewed users, mapped their journeys, and iterated on wireframes.", "skills": ["ux-design"]},
+    {"text": "Chose between a hash map and a balanced tree based on access patterns.", "skills": ["data-structures"]},
+    {"text": "Reasoned about sharding, replication and consistency for a service at scale.", "skills": ["system-design"]},
+    {"text": "Fine-tuned a pretrained language model on a domain-specific corpus.", "skills": ["llm"]}
+  ],
+
+  "hard_negatives": [
+    {"text": "Orchestrated a company-wide reorganisation across four departments.", "skills": [], "traps": ["kubernetes"]},
+    {"text": "Containerised the shipping process for physical goods at the warehouse.", "skills": [], "traps": ["docker"]},
+    {"text": "Trained new hires on the onboarding process during their first week.", "skills": [], "traps": ["deep-learning", "machine-learning"]},
+    {"text": "Built a strong network of contacts across the industry.", "skills": [], "traps": ["computer-networks"]},
+    {"text": "Managed a healthy pipeline of qualified sales leads.", "skills": [], "traps": ["cicd"]},
+    {"text": "Modelled three-year financial projections for the board.", "skills": [], "traps": ["machine-learning"]},
+    {"text": "Clustered the seating so quieter teams sat away from the corridor.", "skills": [], "traps": ["spark", "machine-learning"]},
+    {"text": "Our product sparks genuine joy in the people who use it.", "skills": [], "traps": ["spark"]},
+    {"text": "She was the go-to person whenever a release went sideways.", "skills": [], "traps": ["go"]},
+    {"text": "Continued to excel in every performance review this year.", "skills": [], "traps": ["excel"]},
+    {"text": "Brewed java for the team every morning without fail.", "skills": [], "traps": ["java"]},
+    {"text": "Scaled the cliff face during the company offsite.", "skills": [], "traps": ["system-design"]},
+    {"text": "Indexed the physical archive so records could be found by date.", "skills": [], "traps": ["elasticsearch", "information-retrieval"]},
+    {"text": "Migrated the team to a new open-plan floor over one weekend.", "skills": [], "traps": ["terraform", "aws"]},
+    {"text": "Queried colleagues informally before committing to the decision.", "skills": [], "traps": ["sql"]},
+    {"text": "Embedded myself in the support team for a month to learn the pain points.", "skills": [], "traps": ["embeddings"]},
+    {"text": "Wrote a recommendation letter for a departing colleague.", "skills": [], "traps": ["recommender-systems"]},
+    {"text": "Retrieved the archived contracts from the basement storage room.", "skills": [], "traps": ["information-retrieval", "rag"]},
+    {"text": "Ran a rusty old build server nobody wanted to touch.", "skills": [], "traps": ["rust"]},
+    {"text": "Kept the roadmap flexible and responsive to change.", "skills": [], "traps": ["agile"]}
+  ],
+
+  "_expected_behaviour": {
+    "positives": "Tiers 1+2 must score ~0.000 recall here by construction. Any recall above zero means a case is not actually paraphrase-only and should be moved to the main set.",
+    "hard_negatives": "Every match on a hard negative is a false positive. These drive the SEMANTIC_THRESHOLD choice — the knee is where negatives are suppressed without collapsing positive recall.",
+    "success_criterion": "There must exist a threshold where positive recall > 0.60 AND hard-negative false-positive rate < 0.10. If no such threshold exists, tier 3 is not carrying its weight and should be cut rather than shipped."
+  }
+}
