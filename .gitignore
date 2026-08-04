@@ -13,3 +13,16 @@ build/
 
 # VS Code
 .vscode/
+
+# Real résumé corpus — contains real names/phones/emails, never commit.
+# "test_corpus/*" (not "test_corpus/") so the directory entry itself isn't
+# excluded -- a blanket directory ignore can't be un-ignored from inside,
+# only its contents can.
+test_corpus/*
+*.pdf
+*.docx
+*.oxps
+
+# ...but the synthetic fixtures and the corpus README must be committed
+!backend/tests/fixtures/pdfs/**
+!test_corpus/README.md

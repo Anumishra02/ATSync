@@ -1,0 +1,27 @@
+Priya Sharma
+priya.sharma@example.com | +91 98765 43210 | Bengaluru, India | linkedin.com/in/priyasharma
+Summary
+Computer Science undergraduate with hands-on experience in full-stack web
+development and machine learning. Skilled in Python, JavaScript, and cloud
+deployment. Seeking a Software Engineering internship.
+Education
+B.Tech in Computer Science
+ABC Institute of Technology, 2022-2026, CGPA: 8.4/10
+Experience
+Software Engineering Intern, TechNova Solutions
+May 2025 - Jul 2025, Bengaluru
+Built a REST API using FastAPI and PostgreSQL, serving 50,000 requests per day.
+Automated deployment pipelines with Docker and GitHub Actions, cutting release time by 30%.
+Collaborated with a team of 5 engineers using Agile sprints to ship features biweekly.
+Projects
+Campus Connect | React, Node.js, MongoDB
+Developed a campus event platform used by 1,200 students, with real-time notifications.
+StockSense | Python, scikit-learn, Flask
+Built a stock price prediction model achieving 82% directional accuracy on test data.
+Skills
+Languages: Python, JavaScript, Java, SQL
+Frameworks: React, FastAPI, Flask, Node.js
+Tools: Docker, Git, AWS, PostgreSQL, MongoDB
+Certifications
+AWS Certified Cloud Practitioner
+Deep Learning Specialization - Coursera

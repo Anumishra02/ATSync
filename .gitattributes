@@ -1,0 +1,7 @@
+# Binary files must never go through line-ending conversion -- git doesn't
+# guess PDF/docx/oxps are binary on its own, and CRLF<->LF conversion on a
+# binary file corrupts it (byte sequences that happen to match \n get
+# rewritten even though they aren't line endings).
+*.pdf binary
+*.docx binary
+*.oxps binary
