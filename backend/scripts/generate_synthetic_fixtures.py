@@ -99,19 +99,25 @@ CERTIFICATIONS = [
 
 
 def canonical_lines() -> list[str]:
-    """The single shared ground truth, in canonical reading order."""
-    lines = [NAME, CONTACT, "Summary", *SUMMARY, "Education"]
+    """The single shared ground truth, in canonical reading order.
+
+    Section labels are upper-cased to match _heading()'s rendering
+    (text.upper()) -- these must stay in sync, since this function and
+    the actual PDF drawing code are the two sources of truth being
+    compared against each other.
+    """
+    lines = [NAME, CONTACT, "SUMMARY", *SUMMARY, "EDUCATION"]
     for degree, detail in EDUCATION:
         lines += [degree, detail]
-    lines.append("Experience")
+    lines.append("EXPERIENCE")
     for job in EXPERIENCE:
-        lines += [job["title"], job["meta"], *job["bullets"]]
-    lines.append("Projects")
+        lines += [job["title"], job["meta"], *(f"- {b}" for b in job["bullets"])]
+    lines.append("PROJECTS")
     for proj in PROJECTS:
-        lines += [proj["title"], *proj["bullets"]]
-    lines.append("Skills")
+        lines += [proj["title"], *(f"- {b}" for b in proj["bullets"])]
+    lines.append("SKILLS")
     lines += SKILLS
-    lines.append("Certifications")
+    lines.append("CERTIFICATIONS")
     lines += CERTIFICATIONS
     return lines
 
