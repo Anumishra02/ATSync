@@ -1,9 +1,11 @@
 
+import io
 from pathlib import Path
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
-from services.parser import extract_text_from_pdf
+from services.parser import extract_text_from_pdf as _legacy_extract_text_from_pdf
+from services.parsing.pdf_extract import extract_document
 from services.scoring import legacy_ats_score
 from services.interview import generate_interview_questions
 from services.analyzer import full_analysis
@@ -51,10 +53,38 @@ async def upload_resume(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files allowed")
 
     file_bytes = await file.read()
-    text = extract_text_from_pdf(file_bytes)
 
-    if not text:
-        raise HTTPException(status_code=400, detail="Could not extract text from PDF")
+    # Column-aware extraction first (fixes the real Canva-scramble bug --
+    # see services/parsing/pdf_extract.py). Falls back to the old PyPDF2
+    # path on any failure rather than hard-failing the upload -- pdf_extract
+    # is well-tested but hasn't seen the full range of real-world PDFs yet,
+    # and a worse-but-working extraction beats a 500.
+    try:
+        result = extract_document(io.BytesIO(file_bytes))
+        text = result.text
+        parse_status = result.parse_status
+        print(
+            f"[upload] {file.filename}: pdf_extract "
+            f"(columns={result.column_counts}, {result.chars_per_page:.0f} chars/page, "
+            f"status={parse_status})"
+        )
+    except Exception as e:
+        print(f"[upload] {file.filename}: pdf_extract failed ({e!r}), falling back to PyPDF2")
+        text = _legacy_extract_text_from_pdf(file_bytes)
+        # No page count available from the legacy path, so no per-page
+        # normalization -- a flat floor is a coarser but still honest
+        # safety net for this rarer fallback branch.
+        parse_status = "ok" if len(text) >= 50 else "unreadable"
+
+    if parse_status == "unreadable" or not text:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This PDF has no extractable text -- it looks like a scanned "
+                "image rather than a text-based document. Export or re-save "
+                "it as a text PDF (not a scan) and try again."
+            ),
+        )
 
     return {
         "filename": file.filename,

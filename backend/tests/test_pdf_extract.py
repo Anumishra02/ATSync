@@ -151,6 +151,26 @@ class TestParseSafety:
         assert result.warnings
         assert "no extractable text" in result.warnings[0]
 
+    def test_a_blank_page_is_reported_unreadable(self, tmp_path):
+        from reportlab.lib.pagesizes import LETTER
+        from reportlab.pdfgen import canvas
+
+        path = tmp_path / "blank.pdf"
+        c = canvas.Canvas(str(path), pagesize=LETTER)
+        c.showPage()
+        c.save()
+
+        result = extract_document(path)
+        assert result.chars_per_page == 0.0
+        assert result.is_readable is False
+        assert result.parse_status == "unreadable"
+
+    def test_a_normal_fixture_is_reported_readable(self):
+        result = extract_document(FIXTURES / "word_style.pdf")
+        assert result.is_readable is True
+        assert result.parse_status == "ok"
+        assert result.chars_per_page > 0
+
 
 @skip_without_real_corpus
 class TestRealCorpus:
@@ -175,3 +195,15 @@ class TestRealCorpus:
             result = extract_document(path)
             assert result.text == ""
             assert result.warnings, f"{path.name} produced no text and no warning"
+            assert result.parse_status == "unreadable", path.name
+
+    def test_known_readable_real_files_pass_the_gate(self):
+        readable = [
+            p for p in REAL_CORPUS.glob("*.pdf")
+            if not p.name.startswith("resume ")
+        ]
+        if not readable:
+            pytest.skip("no non-scanned real files present locally")
+        for path in readable:
+            result = extract_document(path)
+            assert result.parse_status == "ok", f"{path.name}: {result.chars_per_page:.0f} chars/page"

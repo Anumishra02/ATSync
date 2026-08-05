@@ -57,6 +57,14 @@ _MIN_COLUMN_FRACTION = 0.15
 _LINE_TOLERANCE = 3.0
 _HIST_BINS = 200
 
+# Readability gate. Calibrated against the real corpus, not guessed: every
+# genuinely text-based résumé measured (5 real, 5 synthetic) landed between
+# 1254 and 3805 chars/page; every one of 12 confirmed-scanned files landed
+# at exactly 0. There is no ambiguous middle ground in that data, so this
+# threshold has enormous margin on both sides rather than being tuned to a
+# knife's edge.
+MIN_CHARS_PER_PAGE = 50
+
 
 @dataclass(frozen=True, slots=True)
 class Word:
@@ -87,6 +95,21 @@ class ExtractionResult:
     @property
     def column_counts(self) -> list[int]:
         return [len(p.column_bounds) for p in self.pages]
+
+    @property
+    def chars_per_page(self) -> float:
+        return len(self.text) / len(self.pages) if self.pages else 0.0
+
+    @property
+    def is_readable(self) -> bool:
+        """False for a scanned/image-only PDF (or any other cause of a
+        near-empty text layer) -- see MIN_CHARS_PER_PAGE for calibration.
+        """
+        return self.chars_per_page >= MIN_CHARS_PER_PAGE
+
+    @property
+    def parse_status(self) -> str:
+        return "ok" if self.is_readable else "unreadable"
 
 
 def _histogram_ink(words: list[Word], page_width: float, n_bins: int = _HIST_BINS) -> list[int]:
