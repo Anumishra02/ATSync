@@ -46,7 +46,7 @@ from wordfreq import zipf_frequency
 
 from services.analyzer import check_quantification
 from services.analysis.experience import extract_all_experience_entries
-from services.matching.chunking import ChunkKind, chunk_job_description, chunk_resume
+from services.matching.chunking import ChunkKind, FACT_LISTING_PATTERN, chunk_job_description, chunk_resume
 from services.scoring import check_sections, score_resume
 from services.skills.matcher import SkillMatcher
 
@@ -169,6 +169,28 @@ class WritingScorer:
     genuinely different kind of signal (grammar/clarity assessment,
     plausibly the deferred check_grammar/Gemini path, or real POS-based
     analysis), not a fourth regex heuristic bolted onto these three.
+
+    Phase 1 item 1 follow-up: after fixing the exact same category-error
+    denominator bug in AchievementsScorer (fact-listing lines like
+    "Coursework: ..." counted as ungraded content they structurally can't
+    satisfy), checked whether the same bug was present here -- it was, on
+    mechanism grounds (a fact-listing line isn't prose a human would ever
+    judge for passive voice or filler either), so it's excluded here too
+    (see FACT_LISTING_PATTERN). Measured, not assumed, whether it actually
+    mattered: only 6/39 corpus resumes changed score at all, and real
+    correlation moved from rho=-0.040 (p=0.81) to rho=-0.011 (p=0.95) --
+    both indistinguishable from zero, the difference is noise at this
+    sample size. Applied anyway, because it's correct on mechanism grounds
+    independent of whether it moves the correlation number, and this IS
+    the confirming result: unlike Achievements (where the same fix moved
+    slope, intercept, r^2, and rho together -- a mechanical bug with a
+    mechanical fix), nothing here moves, because there's no mechanical bug
+    left to find. Writing's gap and Experience's gap (see
+    ExperienceScorer's docstring) are the same kind of finding: a scorer
+    built faithfully to what's mechanically checkable, correlating weakly
+    with a human rater who was evidently judging something else. See
+    evaluation/backlog.md's "Construct validity" section for the
+    consolidated writeup.
     """
 
     name = "writing"
@@ -189,9 +211,15 @@ class WritingScorer:
         # résumé owner's own name or handle repeating across contact links
         # was flagging as "repetition," penalizing writing quality for
         # something with nothing to do with how the résumé is written.
+        # A "Coursework: X, Y, Z" fact-listing line is the same category
+        # error, for the same reason it was excluded from Achievements'
+        # denominator -- see FACT_LISTING_PATTERN and this class's own
+        # docstring for what checking this actually changed.
         lines = [
             c.text for c in chunk_resume(resume_text)
-            if c.is_scorable and not _CONTACT_LINE_PATTERN.search(c.text)
+            if c.is_scorable
+            and not _CONTACT_LINE_PATTERN.search(c.text)
+            and not FACT_LISTING_PATTERN.match(c.text.lstrip())
         ]
         if not lines:
             return DimensionResult(
@@ -358,6 +386,16 @@ class SkillsScorer:
     own required skills). Without one, "how many recognized skills does
     this résumé contain at all" (see _SKILLS_NO_JD_TARGET_COUNT for the
     calibration and its documented taxonomy-coverage caveat).
+
+    Deliberately does NOT exclude FACT_LISTING_PATTERN lines the way
+    AchievementsScorer and WritingScorer do -- checked, not assumed:
+    "Computer skills: Excel, SQL, Python" and "Languages: Spanish" style
+    lines are exactly where real skills legitimately get declared, and
+    excluding them loses genuine, correctly-recognized skill matches on
+    15/39 corpus resumes (some heavily -- R38 alone loses 15). A
+    fact-listing line is a category error for achievement/writing
+    judgment, which it structurally can't satisfy; it's the opposite for
+    skill matching, which is exactly the content it's built to satisfy.
     """
 
     name = "skills"
@@ -512,14 +550,22 @@ class ExperienceScorer:
     come back uncomputable on the achievements dimension (zero bullets to
     grade), so the overall pipeline doesn't end up crediting an empty
     template just because this dimension can't see past its header line.
-    Whether a human rubric-reader was implicitly folding "does this look
-    like a real job" into their experience score too, beyond the rubric's
-    own stated definition, is plausible given this pattern -- the same gap
-    Item 4's WritingScorer found -- but unconfirmed at n=38; a difference
-    this large deserves a second human rater's read on a few of these
-    cases before concluding anything stronger than "the mechanical
-    definition and the human's actual grading behavior may not fully
-    agree."
+
+    This is a construct-validity finding, not a scorer defect, and the
+    second one of its shape in this project (WritingScorer's docstring is
+    the first) -- see evaluation/backlog.md's "Construct validity"
+    section for the consolidated writeup and the decision made about it.
+    Short version: the rubric column is titled "depth and relevance of
+    roles" but its own stated criteria are all formatting completeness;
+    this scorer measures exactly that, faithfully, and a human rater
+    evidently judged something closer to the column's name than its
+    criteria. The more thorough fix -- split into a `_completeness`
+    sub-score (this) and a `_substance` sub-score (semantic, different
+    method) -- is real future work, deliberately not done here because it
+    changes the rubric's shape mid-flight and breaks comparability with
+    the 39 frozen labels. What IS done: report the gap honestly instead
+    of tuning this scorer toward the labels, which would make the number
+    look better and the project worse.
     """
 
     name = "experience"

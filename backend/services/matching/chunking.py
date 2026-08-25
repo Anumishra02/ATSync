@@ -84,6 +84,28 @@ _SECTION_VOCAB = {
 # Public (no leading underscore): analyzer.py's quantification check also
 # needs to recognize skills-section bullets, to exclude them the same way.
 SKILLS_SECTION_NAMES = frozenset({"skills", "technical skills", "core competencies", "technologies"})
+
+# A bulleted or prose line that's structurally a label + comma-separated
+# list -- "Coursework: Machine Learning, Data Structures, Algorithms",
+# "Languages: Written and spoken fluency in Spanish", "Computer skills:
+# Excel, Powerpoint, SQL" -- is a fact listing, not prose making a claim
+# about anything (an achievement, a writing sample). Originally found and
+# fixed in analyzer.py's check_quantification (Phase 1 item 3 follow-up:
+# these lines were being counted as ungraded achievement opportunities,
+# capping every resume's reachable score well below 100% even for
+# genuinely strong ones). Moved here, public, when WritingScorer needed
+# the identical exclusion for the identical reason -- a fact-listing line
+# isn't real prose to judge for passive voice or filler either, and a
+# single shared pattern is safer than two modules independently
+# hand-maintaining the same shape (the exact drift risk BULLET's own
+# docstring above warns about). NOT applied to skill matching
+# (SkillsScorer) -- checked empirically, not assumed: excluding these
+# lines from skill extraction loses real, correctly-recognized skills on
+# 15/39 corpus resumes (a "Computer skills:" or "Languages:" line is
+# exactly where people legitimately declare skills), the opposite of the
+# achievements/writing case where the line structurally can't satisfy
+# what's being measured.
+FACT_LISTING_PATTERN = re.compile(r"^[A-Za-z][A-Za-z /&'-]{1,40}:\s")
 _REQUIRED_CUES = ("must have", "required", "requirement", "you have", "you will need",
                   "we require", "essential", "minimum", "at least", "proven")
 _PREFERRED_CUES = ("nice to have", "preferred", "bonus", "plus", "desirable",

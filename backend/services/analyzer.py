@@ -4,7 +4,13 @@ import os
 import json
 from dotenv import load_dotenv
 
-from services.matching.chunking import ChunkKind, SKILLS_SECTION_NAMES, chunk_resume, normalize_document_text
+from services.matching.chunking import (
+    ChunkKind,
+    FACT_LISTING_PATTERN,
+    SKILLS_SECTION_NAMES,
+    chunk_resume,
+    normalize_document_text,
+)
 from services.scoring import EXPECTED_SECTIONS
 from services.scoring import check_sections as _heading_based_sections
 
@@ -67,28 +73,19 @@ _QUALITATIVE_IMPACT_MARKERS = (
 # explicitly the thing NOT to do here).
 _QUALITATIVE_CREDIT_WEIGHT = 0.5
 
-# A bulleted line that's structurally a label + comma-separated list --
-# "Coursework: Machine Learning, Data Structures, Algorithms", "Languages:
-# Written and spoken fluency in Spanish", "Computer skills: Excel,
-# Powerpoint, SQL" -- is a fact listing, not an achievement claim. It has
-# the same shape as a Skills-section bullet (which SKILLS_SECTION_NAMES
-# already excludes) but shows up under Education, "Additional
-# Information", "Additional Skills and Interests", or a mis-parsed heading
-# just as often as under an actual Skills section, so section-name
-# filtering alone misses it. Judging "no digit here" against a line that
-# was never claiming an achievement in the first place is a category
-# error, and it was a real, measurable source of denominator inflation:
-# every near-perfect human-graded resume in the eval corpus (0.90-0.95)
-# topped out at a 0.56-0.69 machine ratio, never approaching 1.0, because
-# bullets like "Research: MIT Graybiel Lab (published author)" and
-# "Relevant Coursework: Probability and Statistics, Algebra..." were being
-# counted as ungraded achievement opportunities. Checked against all 39
-# resumes: 32 bullets matched, all genuine fact-listings (coursework,
-# GPA/test-score lines, software/language lists, hobbies) -- zero false
-# positives, i.e. no bullet that read as a real accomplishment claim got
-# swept up by this pattern. See AchievementsScorer's docstring for the
-# regression before/after.
-_FACT_LISTING_PATTERN = re.compile(r"^[A-Za-z][A-Za-z /&'-]{1,40}:\s")
+# FACT_LISTING_PATTERN (imported above) was found and fixed here first --
+# "Coursework: Machine Learning, Data Structures, Algorithms", "Research:
+# MIT Graybiel Lab (published author)" and similar lines were being
+# counted as ungraded achievement opportunities, a real, measurable source
+# of denominator inflation (every near-perfect human-graded resume in the
+# eval corpus topped out at a 0.56-0.69 machine ratio, never approaching
+# 1.0, because of exactly this). Checked against all 39 resumes before
+# committing to it: 32 bullets matched, all genuine fact-listings, zero
+# false positives. Now lives in chunking.py, public, because WritingScorer
+# needed the identical exclusion for the identical reason -- see that
+# module's docstring on FACT_LISTING_PATTERN for the full story, including
+# why it does NOT apply to skill matching. See AchievementsScorer's
+# docstring for the achievements regression before/after.
 
 
 def check_quantification(text: str) -> dict:
@@ -129,7 +126,7 @@ def check_quantification(text: str) -> dict:
     was 0.69 against human scores of 0.90-0.95. Cause: the bullet
     denominator included fact-listing lines ("Coursework: ...",
     "Languages: ...") that were never achievement claims and structurally
-    can't carry a number. See _FACT_LISTING_PATTERN.
+    can't carry a number. See FACT_LISTING_PATTERN.
 
     Precondition: `text` is already normalized (chunk_resume's own
     precondition -- see chunking.py's module docstring). Callers already
@@ -148,7 +145,7 @@ def check_quantification(text: str) -> dict:
         c for c in chunks
         if c.kind is ChunkKind.BULLET
         and c.section not in SKILLS_SECTION_NAMES
-        and not _FACT_LISTING_PATTERN.match(c.text.lstrip())
+        and not FACT_LISTING_PATTERN.match(c.text.lstrip())
     ]
     if not bullets:
         return {

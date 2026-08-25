@@ -75,8 +75,17 @@ def inject_passive_voice(text: str) -> str:
     """Insert a guaranteed passive-voice construction into every bullet
     line, deterministically matching WritingScorer's _PASSIVE_PATTERN
     regardless of the bullet's own original content.
+
+    Deliberately ends in a period, not a colon: an earlier version used
+    "This work was completed: " and every injected line was silently
+    dropped from scoring entirely once WritingScorer started excluding
+    FACT_LISTING_PATTERN lines (Phase 1 item 1 follow-up) -- the phrase's
+    own "label: " shape collided with the exact pattern meant to catch
+    "Coursework: ..."-style fact listings, a coincidence specific to this
+    injector's wording, not something a real resume's fact-listing lines
+    would trigger (those are 1-3 word labels, not full sentences).
     """
-    return _inject_after_bullet(text, "This work was completed: ")
+    return _inject_after_bullet(text, "This task was completed. ")
 
 
 def inject_repetition(text: str) -> str:

@@ -129,3 +129,72 @@ regex).** Shares the chunker fix that already landed for bug 3 — some of
 its effect may already be resolved as a side effect. Re-measure against
 the current chunker before patching it as a separate change; don't spend a
 cycle on it independently.
+
+## Construct validity: mechanically-faithful scoring vs. human judgment
+
+Two dimensions now, independently, show the same shape of finding, and
+it's worth naming as a pattern rather than re-discovering per-dimension:
+a scorer built faithfully to a rubric's own *stated* criteria can
+correlate weakly with the human score on that dimension, not because the
+implementation is wrong, but because the human's actual grading behavior
+evidently weighed something the stated criteria don't capture.
+
+**Writing** (`WritingScorer`): repetition + passive voice + filler
+density, rewritten from a repetition-only proxy after a defect-injection
+suite (`test_writing_discrimination.py`) proved the old proxy blind to
+passive voice and filler entirely. The new proxy passes all 40
+defect-injection tests (genuinely discriminates on the three things it
+checks) and still measures essentially zero correlation with the human
+label: rho=-0.011 (p=0.95, n=39) after every fix found, including the
+fact-listing exclusion below. R11 is the concrete case: a human scored it
+7/15 (middling); the proxy gives it a perfect 15.0 — zero repeated words,
+zero passive lines, zero filler lines detected, and a human still found
+something worth marking down.
+
+**Experience** (`ExperienceScorer`): built directly against the rubric's
+own five stated mechanical facts — org name, job title, city/state, dates
+per entry, reverse-chronological order — "parseable, not semantic" by
+design. Measured against the human "experience" column: rho=0.214
+(p=0.20, n=38), also not significant. The rubric column itself is titled
+"depth and relevance of roles," but every criterion actually listed under
+it is formatting completeness — a mismatch between the column's name and
+its own stated definition. The clearest disagreements confirm this
+directly: R14 and R10 are Canva templates where the experience section's
+bullets are literal, unfilled "Lorem ipsum dolor sit amet..." placeholder
+text — a human correctly scored them near the bottom (4/20, 7/20) while
+the scorer gives them 12/20 each, because their headers (org, title,
+dates) are genuinely well-formed even though there's nothing behind them.
+R13 is starker: one entry, zero bullets, every header fact present — 20/20
+mechanically, 8/20 from the human.
+
+**The decision, deliberately not the more thorough one:** the more
+rigorous fix would split each dimension into a `_completeness` sub-score
+(what's built, keep it) and a `_substance` sub-score (semantic, needs a
+different method — likely the same grammar/clarity signal both
+docstrings point to). That's real future work, not done here, because it
+changes the rubric's shape mid-flight and breaks comparability with the
+39 frozen labels this whole cycle is measured against. What's done
+instead: keep both scorers exactly as built, report the weak correlation
+honestly in each one's docstring, and do NOT tune either proxy toward the
+labels to make the number look better — that's the one move that would
+make the metric improve and the project worse, since neither proxy would
+actually be measuring what a human meant by the dimension's name.
+
+**One mechanism check performed before filing this, not skipped:**
+Achievements' fact-listing exclusion (`FACT_LISTING_PATTERN`, promoted to
+`chunking.py` and made public once it was needed by a second scorer) was
+checked against both Writing and Skills before assuming it only applied
+to Achievements.
+- **Writing**: the same category error applies on mechanism grounds (a
+  "Coursework: ..." line isn't real prose a human would judge for passive
+  voice or filler either) and was applied. Checked its effect: only 6/39
+  resumes' scores changed at all, and rho moved from -0.040 to -0.011 —
+  noise, not a fix. Applied anyway for mechanism-correctness, not because
+  it closes the gap; it doesn't, which is itself the confirming result
+  that Writing's problem isn't a fixable denominator bug like
+  Achievements' was.
+- **Skills**: does NOT apply, checked empirically rather than assumed —
+  excluding fact-listing lines from skill extraction loses real,
+  correctly-recognized skill matches on 15/39 corpus resumes (a "Computer
+  skills: Excel, SQL" or "Languages: Spanish" line is exactly where people
+  legitimately declare skills). Left unchanged.
