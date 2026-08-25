@@ -113,6 +113,47 @@ class TestResumeChunking:
         chunks = chunk_resume(text)
         assert all(c.kind is not ChunkKind.HEADING for c in chunks)
 
+    def test_job_titles_matching_a_topic_word_are_still_not_headings(self):
+        # The topic-token segmentation path below (Leadership / Extracurricular)
+        # is deliberately broader than exact vocab -- broad enough that a bare
+        # word like "project" (from _SECTION_VOCAB's "projects") or "research"
+        # would otherwise catch job titles that happen to contain it. The
+        # _ROLE_NOUN_TOKENS veto exists specifically for this.
+        text = (
+            "Project Manager\n"
+            "Ran cross-functional projects end to end.\n\n"
+            "Research Assistant\n"
+            "Supported faculty research.\n"
+        )
+        chunks = chunk_resume(text)
+        assert all(c.kind is not ChunkKind.HEADING for c in chunks)
+
+    def test_unrecognized_compound_heading_still_ends_the_section(self):
+        # The actual bug this fixes: a heading the vocabulary doesn't know
+        # ("Leadership / Extracurricular") used to fail _is_heading entirely,
+        # so nothing flushed the buffer or updated `section` -- everything
+        # under it stayed silently tagged with the prior section. Not
+        # knowing the heading's canonical name is fine; not knowing it's a
+        # boundary at all is the corruption. Segmentation must fire even
+        # when classification can't name the section.
+        text = (
+            "TECHNICAL SKILLS\n"
+            "Python, Docker, Kubernetes\n\n"
+            "Leadership / Extracurricular\n"
+            "President University Name\n"
+            "- Achieved a 4 star fraternity ranking\n"
+            "- Managed executive board of 5 members\n"
+        )
+        chunks = chunk_resume(text)
+        heading = next(c for c in chunks if "Leadership" in c.text)
+        assert heading.kind is ChunkKind.HEADING
+        bullets = [c for c in chunks if c.kind is ChunkKind.BULLET]
+        assert len(bullets) == 2
+        assert all(b.section == "leadership / extracurricular" for b in bullets)
+        # Specifically: NOT stuck on the prior "technical skills" section,
+        # which is what silently excluded these as skills-section noise.
+        assert all(b.section != "technical skills" for b in bullets)
+
 
 class TestJobDescriptionChunking:
     def test_company_boilerplate_is_excluded_from_scoring(self):

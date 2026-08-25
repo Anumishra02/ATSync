@@ -70,7 +70,10 @@ _SECTION_VOCAB = {
 # only prose bullets in mind and silently dropped these from scoring on the
 # resume side, the same class of bug chunk_job_description's min_words=1
 # fixed on the JD side.
-_SKILLS_SECTION_NAMES = frozenset({"skills", "technical skills", "core competencies", "technologies"})
+#
+# Public (no leading underscore): analyzer.py's quantification check also
+# needs to recognize skills-section bullets, to exclude them the same way.
+SKILLS_SECTION_NAMES = frozenset({"skills", "technical skills", "core competencies", "technologies"})
 _REQUIRED_CUES = ("must have", "required", "requirement", "you have", "you will need",
                   "we require", "essential", "minimum", "at least", "proven")
 _PREFERRED_CUES = ("nice to have", "preferred", "bonus", "plus", "desirable",
@@ -78,6 +81,105 @@ _PREFERRED_CUES = ("nice to have", "preferred", "bonus", "plus", "desirable",
 _BOILERPLATE_CUES = ("we are a", "we're a", "about us", "our mission", "equal opportunity",
                      "benefits include", "apply now", "join us", "who we are",
                      "salary", "perks", "we offer")
+
+
+def _singularize(word: str) -> str:
+    """Crude, inspectable de-pluralization -- not a real stemmer.
+
+    Exists so "Certification" registers against the vocabulary's
+    "certifications" without hand-maintaining both forms for every entry.
+    Deliberately narrow: it only strips the common English plural suffixes
+    and leaves anything it isn't sure about untouched, rather than risk
+    mangling a word into a false match.
+    """
+    if word.endswith("ies") and len(word) > 4:
+        return word[:-3] + "y"
+    if word.endswith(("ses", "xes", "ches", "shes")):
+        return word[:-2]
+    if word.endswith("s") and not word.endswith("ss") and len(word) > 3:
+        return word[:-1]
+    return word
+
+
+def _heading_topic_tokens(line: str) -> set[str]:
+    """Normalize a heading-shaped line into topic tokens for vocabulary matching.
+
+    Splits compound headings ("Leadership / Extracurricular", "Technical &
+    Language Skills") on their separators and singularizes each piece, so a
+    heading only needs ONE recognized topic word to register -- not an
+    exact match on the entire phrase. This is deliberately a weaker test
+    than the exact-phrase-or-ALL-CAPS test in _is_heading: it exists only to
+    decide segmentation (does this line end the current section?), not
+    classification (what IS this section, canonically?) -- see
+    _is_heading's docstring for why those two questions are answered
+    separately.
+    """
+    stripped = line.strip().rstrip(":")
+    pieces = re.split(r"[,&/]|\band\b|\bof\b", stripped, flags=re.IGNORECASE)
+    return {_singularize(w.lower()) for piece in pieces for w in piece.split()}
+
+
+# Tried auto-deriving this by splitting every _SECTION_VOCAB phrase into
+# words -- rejected after a corpus-wide dry run turned up real false
+# positives. _SECTION_VOCAB mixes true single-concept nouns ("skills",
+# "experience") with idiomatic multi-word JD boilerplate ("what you will
+# do", "core competencies", "the role", "nice to have") whose individual
+# words are not safe standalone signals: splitting those leaked "the",
+# "to", "core", "what", "we" into the topic vocabulary, which matched
+# things like "The Tombs, Washington, DC" (an employer name) and "across
+# 10 core users" (a bullet fragment) as headings. Hand-curated instead:
+# only the words below are individually meaningful enough to end a section
+# on their own, each singularized so plural/singular variants both match.
+_VOCAB_TOKENS = {
+    _singularize(w) for w in (
+        "experience", "education", "skills", "certifications",
+        "achievements", "awards", "publications", "summary", "objective",
+        "activities", "interests", "languages",
+    )
+}
+# "projects" is deliberately excluded despite being in _SECTION_VOCAB: bare
+# "project" collided with job titles in the corpus dry run ("Project
+# Manager", "Project Coordination", "Project Team Member") that the
+# _ROLE_NOUN_TOKENS veto doesn't catch (their second word isn't a role noun
+# in every case). Standalone "Projects" / "Personal Projects" / "Academic
+# Projects" headings still match today via _SECTION_VOCAB's exact-phrase
+# path above, unaffected by this exclusion -- only compound variants this
+# corpus never exercised ("Key Projects", "Notable Projects") are missed.
+
+# Sourced externally -- standard resume-section vocabulary from general
+# career-services/resume-writing convention, NOT reverse-engineered from any
+# specific resume that failed to parse, and trimmed to only the words the
+# corpus dry run actually needed plus one safe pairing (extracurricular).
+# Several speculative additions (volunteer, tool, research, community,
+# training, affiliation, ...) were tried and dropped: each caused a real
+# false positive somewhere in the corpus ("Community Volunteer" as a job
+# title, "Data Tools"/"Invoicing Tools"/"bioinformatics tools" as skill-list
+# items) without fixing anything this eval actually found broken. It's
+# expected, not circular, that what's left overlaps with headings the eval
+# found unrecognized (leadership, coursework, responsibility, information,
+# specialty) -- they were already common resume vocabulary before this
+# taxonomy existed; this just catches it up, conservatively.
+_EXTRA_HEADING_TOKENS = {
+    "leadership", "extracurricular", "coursework", "specialty",
+    "responsibility", "information",
+}
+
+_HEADING_TOPIC_TOKENS = _VOCAB_TOKENS | _EXTRA_HEADING_TOKENS
+
+# Common occupational nouns. A line whose tokens hit _HEADING_TOPIC_TOKENS
+# but ALSO hit this set is a job title ("Project Manager", "Research
+# Assistant"), not a section heading -- vetoes the token-overlap path in
+# _is_heading. Doesn't need to be exhaustive: false negatives here (a job
+# title that slips through) just mean the old behavior for that one line;
+# false positives (blocking a genuine heading) are the worse failure mode,
+# so this stays conservative rather than trying to be complete.
+_ROLE_NOUN_TOKENS = {
+    "manager", "engineer", "developer", "analyst", "specialist",
+    "coordinator", "assistant", "associate", "consultant", "director",
+    "administrator", "officer", "intern", "president", "treasurer",
+    "secretary", "chair", "researcher", "architect", "technician",
+    "designer", "representative", "supervisor",
+}
 
 
 class ChunkKind(str, Enum):
@@ -117,8 +219,8 @@ class Chunk:
         if self.kind is ChunkKind.HEADING or self.emphasis is Emphasis.BOILERPLATE:
             return False
         # Inside a skills section, min_words doesn't apply -- see
-        # _SKILLS_SECTION_NAMES above.
-        floor = 1 if self.section in _SKILLS_SECTION_NAMES else self.min_words
+        # SKILLS_SECTION_NAMES above.
+        floor = 1 if self.section in SKILLS_SECTION_NAMES else self.min_words
         return len(self.text.split()) >= floor
 
 
@@ -155,11 +257,37 @@ def _is_heading(line: str) -> bool:
     lines like "Senior Backend Engineer" or "React Native Developer" are
     Title Case job titles, not section headings, and got misclassified as
     headings on real PDFs in a way the synthetic test fixtures never
-    exercised. A heading now requires *known* section vocabulary or ALL
-    CAPS -- nothing else. Costs some recall on unusual heading styles
-    (rare, and a false negative here just leaves a heading classified as
-    prose, which is a much smaller error than fabricating a false section
-    boundary).
+    exercised. A heading now requires *known* section vocabulary, ALL CAPS,
+    or (see below) a recognized topic token -- nothing else. Costs some
+    recall on unusual heading styles (rare, and a false negative here just
+    leaves a heading classified as prose, which is a much smaller error
+    than fabricating a false section boundary).
+
+    Segmentation vs. classification: the exact-phrase-or-ALL-CAPS check
+    above answers "is this a heading, AND do we know what it's called" in
+    one step. That conflates two different questions. A heading like
+    "Leadership / Extracurricular" or "Positions of Responsibility" fails
+    the exact-phrase test (it's not literally in _SECTION_VOCAB) and isn't
+    ALL CAPS -- so under the old single-step test it wasn't a heading at
+    all, and everything under it stayed tagged with whatever section came
+    before. That's the actual corruption (bullets silently misattributed,
+    quantification and section-presence scored against the wrong content);
+    not knowing the heading's canonical name is a much smaller problem than
+    not knowing it's a boundary at all. So: a line that clears the shape
+    checks above AND contains at least one recognized topic token (see
+    _heading_topic_tokens) is treated as a heading -- ending the section
+    it's in, and being scored under check_sections' substring matching --
+    even when we can't map it onto a known category. The section label
+    stored for what follows it is still just the heading's own raw text
+    (unchanged from today), not a canonicalized name; this only fixes WHEN
+    the boundary happens, not what to call it.
+
+    Token overlap alone would resurrect the job-title problem above --
+    "Project Manager" hits "project" (from _SECTION_VOCAB's "projects"),
+    "Research Assistant" would hit "research" if that were in the topic
+    vocabulary -- so the topic-token path is vetoed if the line ALSO
+    contains a common occupational noun (_ROLE_NOUN_TOKENS). See that set's
+    docstring for the residual gap this doesn't close.
     """
     stripped = line.strip().rstrip(":")
     if not stripped or len(stripped) > 40:
@@ -174,7 +302,10 @@ def _is_heading(line: str) -> bool:
         return True
     if stripped.endswith((".", ",", ";")):
         return False
-    return stripped.isupper()
+    if stripped.isupper():
+        return True
+    tokens = _heading_topic_tokens(line)
+    return bool(tokens & _HEADING_TOPIC_TOKENS) and not (tokens & _ROLE_NOUN_TOKENS)
 
 
 def _continues(prev: str, line: str) -> bool:
