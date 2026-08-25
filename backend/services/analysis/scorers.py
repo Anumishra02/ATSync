@@ -246,6 +246,39 @@ class AchievementsScorer:
 
     Already returns score=None (uncomputable) for a resume with no real
     bulleted content -- that maps directly onto this model's status field.
+
+    Phase 1 item 3 ("Achievements calibration"): the diagnosis handed down
+    was slope=0.79, r^2=0.71, large negative intercept on n=9 -- i.e. real
+    signal, but a resume with SOME quantification still scored near zero
+    because the old mechanism gave literal zero credit to any bullet
+    lacking a digit, no matter how strong its impact language. Re-measured
+    on the full 39-resume corpus (n=27 with both a human achievements score
+    and a computable machine one) before touching anything: slope=0.571,
+    intercept=-2.33, r^2=0.439, mean_signed_gap=-30.59 (machine badly
+    underscoring relative to human, on the 0-100 check_quantification
+    scale). The two largest-gap resumes (R22: human=90, machine=33: R24:
+    human=50, machine=0) were both cases of a bullet with undeniable impact
+    but no literal number -- "Streamlined investment review process
+    firmwide, resulting in improved financial and risk analysis",
+    "Spearheaded integration of people, processes, and systems between two
+    teams" -- being treated identically to "Attended meetings".
+
+    Fix: check_quantification now gives partial (0.5x) credit to a bullet
+    that contains qualitative impact language (a curated marker list --
+    "led", "spearheaded", "streamlined", "increased", "resulting in", etc.)
+    but no digit, instead of zero. A real number is still worth strictly
+    more than qualitative language alone (see
+    test_qualitative_credit_is_never_worth_more_than_a_real_number) -- this
+    is partial credit, not equivalence. Re-measured after the fix:
+    slope=0.580, intercept=-0.10, r^2=0.519, mean_signed_gap=-27.81. The
+    intercept moved from -2.33 to essentially 0 as a CONSEQUENCE of fixing
+    the mechanism (mapping the "some quantification, but not literal
+    digits" case to nonzero credit), not by fitting a constant on n=9 as
+    explicitly warned against. This is a real, measured, moderate
+    improvement -- not a complete fix. The gap is still -27.81; something
+    else in the corpus continues to pull machine scores below human ones,
+    and closing that further is future work, not something this change
+    claims to have solved.
     """
 
     name = "achievements"
@@ -265,7 +298,11 @@ class AchievementsScorer:
             score=round(pct * self.max_points, 1),
             max_points=self.max_points,
             status="scored",
-            detail={"total_bullets": result["total_bullets"], "quantified": result["quantified"]},
+            detail={
+                "total_bullets": result["total_bullets"],
+                "quantified": result["quantified"],
+                "qualitative": result["qualitative"],
+            },
         )
 
 

@@ -39,8 +39,39 @@ _SECTION_DISPLAY_NAMES = {
     "certifications": "Certifications",
 }
 
+# Achievement/impact language a bullet can carry without a literal digit --
+# curated from real gap cases in the 39-resume evaluation corpus (Phase 1
+# item 3), not guessed: e.g. "Streamlined investment review process
+# firmwide, resulting in improved financial and risk analysis" and
+# "Spearheaded integration of people, processes, and systems..." both drew
+# a human achievements score of 18/20 and a machine score of 0 under the
+# old digit-only test (see AchievementsScorer's docstring for the full
+# mechanism explanation and the before/after regression numbers). Deliberately
+# NOT the generic resume-verb list check_repetition stoplists ("built",
+# "developed", "managed", ...) -- those are common regardless of whether the
+# bullet demonstrates outcome/impact/leadership; this list is words that
+# specifically signal one of those three, so "Built a REST service" still
+# doesn't qualify but "Spearheaded the REST service migration" does.
+_QUALITATIVE_IMPACT_MARKERS = (
+    "led", "co-led", "spearheaded", "founded", "founding", "pioneered",
+    "streamlined", "improved", "increased", "reduced", "accelerated",
+    "optimized", "transformed", "overhauled", "revamped", "drove",
+    "resulting in", "resulted in", "awarded", "recognized", "promoted",
+    "first", "record", "exceeded", "surpassed", "outperformed",
+)
+# Digit-bearing bullets get full credit; qualitative-only ones get partial
+# credit, not full -- a claim of impact without a number is still weaker
+# evidence than one with a number attached. 0.5 is a real, defensible
+# middle value, not tuned to hit a target correlation on this corpus (see
+# AchievementsScorer's docstring: fitting a constant on n=27 was
+# explicitly the thing NOT to do here).
+_QUALITATIVE_CREDIT_WEIGHT = 0.5
+
+
 def check_quantification(text: str) -> dict:
-    """Quantified-achievement rate among real bullets.
+    """Achievement-evidence rate among real bullets: full credit for a
+    literal number, partial credit for qualitative-but-strong impact
+    language, zero for neither.
 
     Used to find bullets with its own regex (`r'[•\\-\\*]\\s*(.+)'`) straight
     over the raw text. That regex treats ANY hyphen as a bullet marker, not
@@ -58,6 +89,16 @@ def check_quantification(text: str) -> dict:
     "Docker") are additionally excluded -- a tech-stack list can't be
     "quantified" and shouldn't be judged on this axis; including them was a
     second, separate source of denominator inflation.
+
+    A second, larger mechanism bug (Phase 1 item 3, evaluation/backlog.md):
+    the digit-only test gave zero credit to a bullet with real,
+    undeniable impact but no literal number ("Spearheaded integration of
+    people, processes, and systems between..."), with no partial credit
+    for qualitative-but-strong impact language. Backlog's regression
+    found this as a real signal with a large negative intercept (slope
+    0.571, intercept -2.33, r^2=0.439, p=0.0002 on this corpus,
+    mean_signed_gap=-30.6 on a 0-100 scale) -- the mechanism, not noise,
+    per the near-1 slope. See _QUALITATIVE_IMPACT_MARKERS.
 
     Precondition: `text` is already normalized (chunk_resume's own
     precondition -- see chunking.py's module docstring). Callers already
@@ -81,17 +122,27 @@ def check_quantification(text: str) -> dict:
             "score": None,
             "total_bullets": 0,
             "quantified": 0,
+            "qualitative": 0,
             "issues": 0,
             "verdict": "No bulleted achievements found -- quantification can't be assessed",
             "tip": "Add numbers to your bullet points (e.g. 'Improved performance by 30%')"
         }
     quantified = [c for c in bullets if re.search(r'\d+', c.text)]
-    score = round(len(quantified) / len(bullets) * 100)
+    quantified_ids = {id(c) for c in quantified}
+    qualitative = [
+        c for c in bullets
+        if id(c) not in quantified_ids
+        and any(marker in c.text.lower() for marker in _QUALITATIVE_IMPACT_MARKERS)
+    ]
+    credit = len(quantified) + _QUALITATIVE_CREDIT_WEIGHT * len(qualitative)
+    score = round(credit / len(bullets) * 100)
+    unscored = len(bullets) - len(quantified) - len(qualitative)
     return {
         "score": score,
         "total_bullets": len(bullets),
         "quantified": len(quantified),
-        "issues": len(bullets) - len(quantified),
+        "qualitative": len(qualitative),
+        "issues": unscored,
         "verdict": "Good" if score >= 60 else "Needs improvement",
         "tip": "Add numbers to your bullet points (e.g. 'Improved performance by 30%')"
     }

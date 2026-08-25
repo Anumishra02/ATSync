@@ -60,6 +60,35 @@ def test_no_bullets_is_uncomputable_not_zero():
     assert result["issues"] == 0
 
 
+def test_qualitative_impact_language_earns_partial_not_zero_credit():
+    # Real example from the evaluation corpus (Phase 1 item 3): a bullet
+    # with undeniable impact but no literal digit used to score exactly
+    # like "did nothing" bullets. Partial credit, not full -- a claim of
+    # impact without a number is still weaker evidence than one with a
+    # number attached, so it shouldn't score identically to a quantified
+    # bullet either.
+    text = (
+        "Experience\n"
+        "- Spearheaded integration of people, processes, and systems between two teams\n"
+        "- Attended meetings\n"
+    )
+    result = check_quantification(text)
+    assert result["qualitative"] == 1
+    assert result["quantified"] == 0
+    # 1 bullet at 0.5 credit, 1 at 0: 0.5/2 = 25%
+    assert result["score"] == 25
+
+
+def test_qualitative_credit_is_never_worth_more_than_a_real_number():
+    quantified_only = check_quantification(
+        "Experience\n- Cut deployment time by 40%\n- Cut deployment time by 40%\n"
+    )
+    qualitative_only = check_quantification(
+        "Experience\n- Streamlined the deployment process\n- Streamlined the deployment process\n"
+    )
+    assert qualitative_only["score"] < quantified_only["score"]
+
+
 def test_full_analysis_redistributes_weight_around_uncomputable_quantification():
     # overall_score should stay on the 0-100 scale (not silently capped
     # below 100, not punished as if quantification scored 0) when
