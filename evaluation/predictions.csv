@@ -1,0 +1,40 @@
+id,field,taxonomy_covered,jd_skill_count,machine_total,machine_relevance,machine_skills,machine_achievements,machine_writing,machine_structure,machine_experience,ats_score,skill_score,keyword_score,quantification_score,repetition_score,grammar_score,sections_score,contact_score,file_format_score,parse_status,chars_extracted
+R01,Art History / Arts Administration,False,1,39,26.32,0.0,27,25,61.7,,7.89,0.0,26.32,27,25,85,60,25,100,ok,2819
+R02,Education / Youth Development,False,1,41,22.0,0.0,44,25,61.7,,6.6,0.0,22.0,44,25,85,60,25,100,ok,3629
+R03,Public Policy,False,3,43,29.41,33.33,6,25,61.7,,32.16,33.33,29.41,6,25,85,60,25,100,ok,3831
+R04,Marketing,False,5,43,19.15,0.0,29,40,70.0,,5.74,0.0,19.15,29,40,85,60,50,100,ok,2271
+R05,Mechanical Engineering,False,2,43,33.33,0.0,15,25,78.3,,10.0,0.0,33.33,15,25,85,60,75,100,ok,2748
+R06,Bioengineering,False,1,46,42.22,0.0,33,25,78.3,,12.67,0.0,42.22,33,25,85,60,75,100,ok,2976
+R07,History / Non-profit,False,2,71,27.66,100.0,44,55,78.3,,78.3,100.0,27.66,44,55,85,60,75,100,ok,2877
+R08,Mechanical Engineering,False,2,43,33.33,0.0,15,25,78.3,,10.0,0.0,33.33,15,25,85,60,75,100,ok,2747
+R09,Accounting,False,3,56,32.61,33.33,25,70,78.3,,33.12,33.33,32.61,25,70,85,60,75,100,ok,2827
+R10,Marketing,False,5,52,40.43,20.0,,40,70.0,,26.13,20.0,40.43,,40,85,60,50,100,ok,1682
+R11,Business Analysis / PM,True,8,46,45.83,12.5,,55,56.7,,22.5,12.5,45.83,,55,85,20,50,100,ok,2130
+R12,UX Design,False,3,47,36.59,0.0,,70,61.7,,10.98,0.0,36.59,,70,85,60,25,100,ok,2009
+R13,UX Design,False,3,50,34.15,0.0,,70,70.0,,10.24,0.0,34.15,,70,85,60,50,100,ok,1980
+R14,Graphic Design,False,2,52,17.02,50.0,,25,63.3,,40.11,50.0,17.02,,25,85,40,50,100,ok,2061
+R15,Accounting / Finance,False,4,47,38.1,0.0,,70,63.3,,11.43,0.0,38.1,,70,85,40,50,100,ok,2138
+R16,Data Science / ML,True,15,73,61.7,73.33,56,55,85.0,,69.84,73.33,61.7,56,55,85,80,75,100,ok,3249
+R17,Government / Policy,False,3,56,30.77,66.67,50,40,53.3,,55.9,66.67,30.77,50,40,85,60,0,100,ok,3426
+R18,International Business,False,4,54,20.83,50.0,42,25,70.0,,41.25,50.0,20.83,42,25,85,60,50,100,ok,2917
+R19,Computer Science / SWE,True,13,62,42.5,61.54,17,25,93.3,,55.83,61.54,42.5,17,25,85,80,100,100,ok,3805
+R20,Manufacturing / Industrial Eng,False,2,53,39.53,50.0,40,25,61.7,,46.86,50.0,39.53,40,25,85,60,25,100,ok,4179
+R21,Real Estate Development,False,2,52,36.54,50.0,22,25,70.0,,45.96,50.0,36.54,22,25,85,60,50,100,ok,4153
+R22,Strategy / Finance,False,4,45,59.62,25.0,33,25,55.0,,35.38,25.0,59.62,33,25,85,40,25,100,ok,4694
+R23,CS / Mechanical Eng,True,6,46,27.91,16.67,33,25,68.3,,20.04,16.67,27.91,33,25,85,80,25,100,ok,3693
+R24,Computer Science / HCI,True,7,45,38.64,42.86,0,25,61.7,,41.59,42.86,38.64,0,25,85,60,25,100,ok,3030
+R25,Environmental Engineering,False,2,48,47.83,0.0,54,25,68.3,,14.35,0.0,47.83,54,25,85,80,25,100,ok,4175
+R26,Materials Science -> Consulting,False,4,34,24.49,0.0,,25,48.3,,7.35,0.0,24.49,,25,85,20,25,100,ok,3894
+R27,Urban Political Economy,False,2,43,42.55,0.0,27,25,70.0,,12.77,0.0,42.55,27,25,85,60,50,100,ok,3966
+R28,Biology / Life Sciences,False,2,35,33.33,0.0,59,25,41.7,,10.0,0.0,33.33,59,25,85,0,25,100,ok,4356
+R29,Mathematics with CS,True,12,45,30.23,0.0,67,25,61.7,,9.07,0.0,30.23,67,25,85,60,25,100,ok,3594
+R30,Graphic Design,False,2,64,44.68,50.0,,40,76.7,,48.4,50.0,44.68,,40,85,80,50,100,ok,1463
+R31,Graphic Design,False,2,64,44.68,50.0,,40,76.7,,48.4,50.0,44.68,,40,85,80,50,100,ok,1463
+R32,Engineering / Project Management,False,4,46,28.89,0.0,,70,63.3,,8.67,0.0,28.89,,70,85,40,50,100,ok,2014
+R33,Software Engineering / ERP,True,7,65,50.0,71.43,28,25,83.3,,65.0,71.43,50.0,28,25,85,100,50,100,ok,5754
+R34,Finance / Business Administration,False,4,51,28.89,25.0,56,25,70.0,,26.17,25.0,28.89,56,25,85,60,50,100,ok,3307
+R35,Architecture / Design,False,1,52,36.0,0.0,,55,76.7,,10.8,0.0,36.0,,55,85,80,50,100,ok,2566
+R36,Software Engineering / Creator,True,11,57,19.23,18.18,58,100,68.3,,18.5,18.18,19.23,58,100,85,80,25,100,ok,4411
+R37,Electrical Eng & Computer Science,True,7,63,43.75,57.14,30,25,93.3,,53.12,57.14,43.75,30,25,85,80,100,100,ok,4144
+R38,Full-Stack Web Development,True,20,70,52.27,85.0,44,25,85.0,,75.18,85.0,52.27,44,25,85,80,75,100,ok,3068
+R39,Administration / Office Management,False,2,62,44.44,50.0,,55,70.0,,48.33,50.0,44.44,,55,85,60,50,100,ok,2002

@@ -1,0 +1,29 @@
+Description
+As a product designer on our team, you'll design intuitive interfaces and collaborate closely with engineers, data scientists, and manufacturing experts to transform complex manufacturing problems into user-friendly experiences that drive operational excellence across Apple's global supply chain.
+
+Work closely with manufacturing teams and stakeholders to learn about their daily workflows and understand what they need to do their jobs effectively
+
+Share design insights and ideas with product and engineering teams to help improve our platforms and user experiences
+
+Build interactive prototypes that accurately represent data and functionality, helping teams visualize new features across our different platforms
+
+Test designs with real users to make sure they're intuitive and solve the right problems for people who use our tools every day
+
+Create detailed design handoffs and work alongside engineering teams to bring designs to life, ensuring they work well for our users
+
+Minimum Qualifications
+Bachelor's degree in related field, or equivalent professional experience
+1+ years of experience in UX/UI design with a portfolio demonstrating user-centered design process
+Proficiency in design tools such as Sketch, Figma, or Adobe Creative Suite
+Strong communication skills and ability to present design rationale to stakeholders
+Ability to work collaboratively within cross-functional teams, including engineers and product managers
+Experience with user research methods specific to enterprise, data-driven products
+
+Preferred Qualifications
+Advanced degree in a relevant field or 2+ years of professional experience
+Familiarity with information visualization, data storytelling, or data journalism
+Basic understanding of data visualization libraries and frameworks (D3, Observable, Tableau, etc.)
+Exposure to statistical analysis and data manipulation or tools (SQL, Python pandas, R, etc.)
+Working knowledge of web technologies (HTML, CSS, JavaScript) and an interest in prototyping interactive visualizations
+
+At Apple, we believe accessibility is a fundamental human right. You’ll find that idea reflected in everything here — in our culture, our benefits and our digital tools. By welcoming as many perspectives as possible, we help you build a career where you feel like you belong.

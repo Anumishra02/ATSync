@@ -1,0 +1,40 @@
+id,name,field,level,relevance,skills,experience,achievements,writing,structure,total
+R01,Jay Highlander,Art History / Arts Administration,Student (undergrad),10,8,13,8,9,11,59
+R02,Alex Highlander,Education / Youth Development,Student (undergrad),10,8,14,10,8,11,61
+R03,Eva Highlander,Public Policy,Student (undergrad),9,8,13,6,6,8,50
+R04,Divya Careers,Marketing,Student (undergrad),13,12,15,15,12,13,80
+R05,Scot Highlander,Mechanical Engineering,Recent grad,13,13,15,11,12,13,77
+R06,Scarlett Highlander,Bioengineering,Grad student (MS),13,14,15,10,12,10,74
+R07,Jeffrey K. Levasheff,History / Non-profit,Student (undergrad),11,11,16,17,12,13,80
+R08,Scot Highlander,Mechanical Engineering,Recent grad,13,13,15,11,12,14,78
+R09,Bing (Taylor) Wang,Accounting,Student (undergrad),12,13,15,14,12,13,79
+R10,Estelle Darcy,Marketing,Early-career professional,5,4,7,3,4,7,30
+R11,Henrietta Mitchell,Business Analysis / PM,Early-career professional,6,5,8,7,7,5,38
+R12,Daniel Gallego,UX Design,Mid-level professional,7,6,9,11,7,7,47
+R13,Daniel Gallego,UX Design,Mid-level professional,7,6,8,11,7,6,45
+R14,Seema Chaudhry,Graphic Design,Mid-level professional,3,4,4,2,3,6,22
+R15,Rachelle Beaudry,Accounting / Finance,Experienced / Senior,10,7,15,16,12,6,66
+R16,Harshibar,Data Science / ML,Experienced professional,14,15,17,19,14,12,91
+R17,Madison A. Crawford,Government / Policy,Student (undergrad),10,8,15,12,10,8,63
+R18,Anya K. Hoya,International Business,Student (early undergrad),7,7,9,7,8,9,47
+R19,First Last (template),Computer Science / SWE,Student (undergrad),13,14,15,8,10,14,74
+R20,Manufacturing Engineer (unnamed),Manufacturing / Industrial Eng,Grad student (MEng),12,12,14,15,9,9,71
+R21,Graduate Student (unnamed),Real Estate Development,Experienced / Career-changer,13,6,17,14,12,11,73
+R22,A.N. Alum,Strategy / Finance,Experienced / Senior,13,10,17,18,11,11,80
+R23,Joe Resume,CS / Mechanical Eng,Grad student (MS),11,11,14,13,11,11,71
+R24,Charles Meng,Computer Science / HCI,Grad student (MEng),12,11,14,10,10,10,67
+R25,Student Enviro Eng (unnamed),Environmental Engineering,Grad student (MEng),13,9,16,16,10,10,74
+R26,PhD Consulting Candidate (unnamed),Materials Science -> Consulting,Doctoral candidate,11,3,15,16,9,7,61
+R27,Jean Upeg,Urban Political Economy,Doctoral candidate,12,6,16,14,11,11,70
+R28,Jane Doe,Biology / Life Sciences,Student (undergrad),13,6,16,18,12,9,74
+R29,Matha Maddox,Mathematics with CS,Student (undergrad),12,8,15,18,13,11,77
+R30,Marceline Anderson,Graphic Design,Mid-level professional,8,10,9,6,7,10,50
+R31,Marceline Anderson,Graphic Design,Mid-level professional,8,10,9,6,7,10,50
+R32,Jacqueline Thompson,Engineering / Project Management,Early-career professional,9,8,12,15,10,10,64
+R33,Ajay Kedare,Software Engineering / ERP,Experienced professional,10,13,13,7,7,7,57
+R34,John Carroll,Finance / Business Administration,Student (undergrad),14,12,16,17,13,13,85
+R35,Hayden Lee,Architecture / Design,Student (undergrad),11,13,11,5,9,5,54
+R36,Harshibar,Software Engineering / Creator,Experienced professional,12,13,16,18,12,10,81
+R37,Undergraduate Student (unnamed),Electrical Eng & Computer Science,Student (undergrad),14,15,16,13,10,12,80
+R38,Harshibar,Full-Stack Web Development,Experienced professional,14,15,16,17,14,12,88
+R39,Olivia Sanchez,Administration / Office Management,Early-career professional,7,5,10,5,6,8,41

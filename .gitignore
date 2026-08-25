@@ -26,3 +26,11 @@ test_corpus/*
 # ...but the synthetic fixtures and the corpus README must be committed
 !backend/tests/fixtures/pdfs/**
 !test_corpus/README.md
+
+# evaluation/step0/Resumes/: 39-resume calibration set, all template/
+# placeholder identities verified individually (e.g. "(xxx) xxx-xxxx",
+# "hello@reallygreatsite.com" -- Canva's own template placeholder domain,
+# "555.555.5555") -- no real names/contact info, safe to commit, and this
+# is the human-labeled evaluation asset the whole scoring calibration
+# effort depends on.
+!evaluation/step0/Resumes/**
