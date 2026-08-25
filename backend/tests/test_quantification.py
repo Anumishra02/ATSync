@@ -89,6 +89,29 @@ def test_qualitative_credit_is_never_worth_more_than_a_real_number():
     assert qualitative_only["score"] < quantified_only["score"]
 
 
+def test_fact_listing_bullets_are_excluded_from_the_denominator():
+    # Real pattern from the evaluation corpus (Phase 1 item 3 follow-up): a
+    # bulleted "Label: comma, separated, list" line -- coursework,
+    # languages spoken, software used -- is a fact listing, not an
+    # achievement claim. It was being counted as an ungraded achievement
+    # opportunity just because it happened to live under Education or
+    # "Additional Information" instead of a Skills section, which
+    # artificially capped every resume's reachable score well below 100%.
+    text = (
+        "Experience\n"
+        "- Cut deployment time by 40%\n\n"
+        "Education\n"
+        "- Coursework: Machine Learning, Data Structures, Algorithms\n"
+        "- Research: Analyzed urban microbe spread patterns\n"
+    )
+    result = check_quantification(text)
+    # Only the real achievement bullet counts -- the two fact-listing
+    # lines under Education are excluded entirely, not scored as misses.
+    assert result["total_bullets"] == 1
+    assert result["quantified"] == 1
+    assert result["score"] == 100
+
+
 def test_full_analysis_redistributes_weight_around_uncomputable_quantification():
     # overall_score should stay on the 0-100 scale (not silently capped
     # below 100, not punished as if quantification scored 0) when

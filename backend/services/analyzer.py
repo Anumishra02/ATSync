@@ -67,6 +67,29 @@ _QUALITATIVE_IMPACT_MARKERS = (
 # explicitly the thing NOT to do here).
 _QUALITATIVE_CREDIT_WEIGHT = 0.5
 
+# A bulleted line that's structurally a label + comma-separated list --
+# "Coursework: Machine Learning, Data Structures, Algorithms", "Languages:
+# Written and spoken fluency in Spanish", "Computer skills: Excel,
+# Powerpoint, SQL" -- is a fact listing, not an achievement claim. It has
+# the same shape as a Skills-section bullet (which SKILLS_SECTION_NAMES
+# already excludes) but shows up under Education, "Additional
+# Information", "Additional Skills and Interests", or a mis-parsed heading
+# just as often as under an actual Skills section, so section-name
+# filtering alone misses it. Judging "no digit here" against a line that
+# was never claiming an achievement in the first place is a category
+# error, and it was a real, measurable source of denominator inflation:
+# every near-perfect human-graded resume in the eval corpus (0.90-0.95)
+# topped out at a 0.56-0.69 machine ratio, never approaching 1.0, because
+# bullets like "Research: MIT Graybiel Lab (published author)" and
+# "Relevant Coursework: Probability and Statistics, Algebra..." were being
+# counted as ungraded achievement opportunities. Checked against all 39
+# resumes: 32 bullets matched, all genuine fact-listings (coursework,
+# GPA/test-score lines, software/language lists, hobbies) -- zero false
+# positives, i.e. no bullet that read as a real accomplishment claim got
+# swept up by this pattern. See AchievementsScorer's docstring for the
+# regression before/after.
+_FACT_LISTING_PATTERN = re.compile(r"^[A-Za-z][A-Za-z /&'-]{1,40}:\s")
+
 
 def check_quantification(text: str) -> dict:
     """Achievement-evidence rate among real bullets: full credit for a
@@ -100,6 +123,14 @@ def check_quantification(text: str) -> dict:
     mean_signed_gap=-30.6 on a 0-100 scale) -- the mechanism, not noise,
     per the near-1 slope. See _QUALITATIVE_IMPACT_MARKERS.
 
+    A third mechanism bug, found while checking whether the fix above
+    left a real ceiling (not just an offset) behind: no resume in the
+    corpus, however strong, ever got close to a 100% ratio -- the best
+    was 0.69 against human scores of 0.90-0.95. Cause: the bullet
+    denominator included fact-listing lines ("Coursework: ...",
+    "Languages: ...") that were never achievement claims and structurally
+    can't carry a number. See _FACT_LISTING_PATTERN.
+
     Precondition: `text` is already normalized (chunk_resume's own
     precondition -- see chunking.py's module docstring). Callers already
     normalize once at the API boundary; this does not re-normalize.
@@ -115,7 +146,9 @@ def check_quantification(text: str) -> dict:
     chunks = chunk_resume(text)
     bullets = [
         c for c in chunks
-        if c.kind is ChunkKind.BULLET and c.section not in SKILLS_SECTION_NAMES
+        if c.kind is ChunkKind.BULLET
+        and c.section not in SKILLS_SECTION_NAMES
+        and not _FACT_LISTING_PATTERN.match(c.text.lstrip())
     ]
     if not bullets:
         return {

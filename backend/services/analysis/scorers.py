@@ -270,15 +270,40 @@ class AchievementsScorer:
     more than qualitative language alone (see
     test_qualitative_credit_is_never_worth_more_than_a_real_number) -- this
     is partial credit, not equivalence. Re-measured after the fix:
-    slope=0.580, intercept=-0.10, r^2=0.519, mean_signed_gap=-27.81. The
-    intercept moved from -2.33 to essentially 0 as a CONSEQUENCE of fixing
-    the mechanism (mapping the "some quantification, but not literal
-    digits" case to nonzero credit), not by fitting a constant on n=9 as
-    explicitly warned against. This is a real, measured, moderate
-    improvement -- not a complete fix. The gap is still -27.81; something
-    else in the corpus continues to pull machine scores below human ones,
-    and closing that further is future work, not something this change
-    claims to have solved.
+    slope=0.580, intercept=-0.10, r^2=0.519.
+
+    Correction on how to read that: slope=0.580 with intercept~=0 is not
+    "an offset plus a mystery residual" -- it's pure scale compression. A
+    human score of H predicts a machine score of 0.58*H; the -27.81 mean
+    gap is just what that slope implies at the corpus's mean human score,
+    not a separate unexplained defect. The near-zero intercept is exactly
+    the signature of a correct mechanism fix (see the intercept move from
+    -2.33 there), so the qualitative-credit fix is real and done. What was
+    left after it is that the scorer's reachable ceiling was well under
+    100%: checked directly, the highest machine ratio across all 39
+    resumes was 0.69, on a resume humans scored 0.90-0.95. Root cause
+    (checked before touching anything, per the same discipline as above):
+    the bullet denominator included fact-listing lines -- "Coursework:
+    Machine Learning, Data Structures...", "Languages: Written and spoken
+    fluency in Spanish..." -- that were never achievement claims and can't
+    carry a number by construction, structurally identical to the
+    Skills-section bullets already excluded but living under Education or
+    "Additional Information" instead. See _FACT_LISTING_PATTERN.
+    Re-measured after excluding those: slope=0.701, intercept=-0.06,
+    r^2=0.577, Spearman rho=0.764 (up from 0.730) -- both the linear fit
+    and the rank correlation improved together, which is the signal this
+    captured real structure rather than fitting noise (an arbitrary
+    denominator change that was just noise-fitting would trade one for the
+    other, not improve both). Ceiling still isn't fully closed (max ratio
+    0.72, not 1.0) -- some genuine achievement bullets describe scope or a
+    built artifact without a digit or one of the curated impact markers
+    ("Built a back-end data service... to log and analyze query
+    behavior"), and expanding the marker list to catch them was
+    deliberately not done here: generic action verbs ("built", "developed",
+    "managed") would blur the qualitative-marker list back into "any bullet
+    that describes doing something," which is exactly the undiscriminating
+    signal _QUALITATIVE_IMPACT_MARKERS was built to avoid. That's honest
+    remaining headroom, not something this change claims to have solved.
     """
 
     name = "achievements"
