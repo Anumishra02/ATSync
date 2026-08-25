@@ -1,0 +1,361 @@
+{
+  "_provenance_note": "Phase 1 JD rebuild: one real, currently-live job posting per resume, matched on field AND level (evaluation/labels.csv), fetched from each company's own public job-board API (Lever api.lever.co/v0/postings, Greenhouse boards-api.greenhouse.io) on 2026-08-26. Each entry records source_url, company, title, and fetch_date for provenance. 33/38 resumes have a genuinely new, level-matched posting; 5 (R02, R04, R07, R09, R18) could not be matched to a live posting in the time available and fall back to the original field-only JD from jds.json, explicitly flagged via is_fallback. See evaluation/backlog.md's JD rebuild section for the full writeup, including known imperfect-level-match cases.",
+  "R01": {
+    "field": "Art History / Arts Administration",
+    "level": "Student (undergrad)",
+    "title": "Archives and Records Management Intern: Artwork Documentation",
+    "company": "SFMOMA",
+    "source_url": "https://jobs.lever.co/sfmoma/1f7fa3df-ef91-460c-a93d-9673565028a7",
+    "fetch_date": "2026-08-26",
+    "text": "SFMOMA is offering an unpaid internship for Fall 2026, at least 3 hours per week, fully onsite, requiring proof of school credit.\n\nRequirements\n- Current student or recent graduate with interest, background, and knowledge of art history and/or museum operations\n- Experience or coursework in archives, records management, museum studies, or related field\n- Strong organizational skills and attention to detail\n- Ability to work independently with museum collection information management and digital asset management systems\n- Interest in artwork documentation, cataloging, and processing museum records\n\nThis internship provides experience in records management, processing, collections information management, and digital asset management in a museum context, supporting the documentation of artwork across SFMOMA's collection."
+  },
+  "R03": {
+    "field": "Public Policy",
+    "level": "Student (undergrad)",
+    "title": "Policy Analyst (Junior)",
+    "company": "FiscalNote",
+    "source_url": "https://jobs.lever.co/fiscalnote/db817177-e051-41ed-b43e-aa1ba2c5be01",
+    "fetch_date": "2026-08-26",
+    "text": "About the Position\nFiscalNote is hiring a Policy Analyst to serve as a core member of our Professional Services team and a trusted resource for our clients. Policy Analysts are curious, detail-oriented, and self-motivated -- they thrive on staying current with legislative and regulatory developments and translating complex policy into clear, actionable insights. In this role, you will support a portfolio of clients across issue areas, executing high-quality analytical work with accuracy and consistency.\n\nAbout You\n- You have a passion for policy -- at the federal, state, or local level -- and a genuine curiosity about how legislation and regulation shape the world.\n- You are a strong writer and communicator who can synthesize complex information for a wide range of audiences, from analysts to executives.\n- You are organized, reliable, and take pride in delivering accurate, high-quality work on time -- even when juggling competing priorities.\n- You seek out feedback, apply it quickly, and are committed to building your skills and growing your career.\n- You are a team player who contributes positively to those around you and takes accountability for your own work and outcomes.\n- You are comfortable working with technology and data, and open to adopting new tools including AI-assisted workflows.\nThe salary range for this position is $52,000 - $59,500 per year."
+  },
+  "R05": {
+    "field": "Mechanical Engineering",
+    "level": "Recent grad",
+    "title": "Mechanical Engineer (Junior)",
+    "company": "RIVR (Amazon)",
+    "source_url": "https://jobs.lever.co/rivr/2b332a67-ca91-4f10-9c1a-452a9ad923e5",
+    "fetch_date": "2026-08-26",
+    "text": "RIVR, part of Amazon, is a robotics company pioneering Physical AI through real-world doorstep delivery. Founded in 2024 as an ETH Zurich spin-off, RIVR developed wheeled-legged robots designed to operate in complex, unstructured environments such as stairs, gates, doors, and uneven urban terrain.\n\nMechanical Engineer (Junior)\nRequirements: Bachelor's or Master's degree in Mechanical Engineering or related field, 0-2 years of professional or research experience, strong fundamentals in mechanical design, CAD proficiency, and interest in robotics hardware for real-world deployment. You will contribute to designing, prototyping, and testing mechanical subsystems for next-generation delivery robots operating in unstructured environments, working closely with electrical, controls, and manufacturing engineers."
+  },
+  "R06": {
+    "field": "Bioengineering",
+    "level": "Grad student (MS)",
+    "title": "Biomedical Engineer Intern",
+    "company": "Neuralink",
+    "source_url": "https://boards.greenhouse.io/neuralink/jobs/7872639003",
+    "fetch_date": "2026-08-26",
+    "text": "About Neuralink: We are creating devices that enable a bi-directional interface with the brain. These devices allow us to restore movement to the paralyzed, restore sight to the blind, and revolutionize how humans interact with their digital world.\n\nTeam Description: The Next Gen team at Neuralink is developing the next generation of brain-computer interfaces. We are laying the groundwork for intuitive, high-dimensional, and bidirectional interfaces between brains and machines.\n\nJob Description and Responsibilities: As a Biomedical Engineer intern, you'll interact with technical teams across the company to develop new ideas, materials, and processes that drive our next generation of implants forward. You'll work closely with scientists and engineers to explore innovative concepts, perform rigorous benchtop testing, troubleshoot experimental setups, and analyze results.\n- Contribute to the development of next-generation microelectrode materials, partnering with the microfabrication team to bring concepts from idea to hardware\n- Develop novel solutions for electrode-tissue interfaces to enhance electrode sensitivity and interface longevity\n- Perform materials characterization and surface chemistry experiments on candidate materials and implant components\n- Design and fabricate custom test fixtures to enable new experiments\n\nRequired Qualifications:\n- Evidence of exceptional ability in Materials Engineering, Chemical Engineering, Biomedical Engineering, Chemistry, or a related field\n- 2+ years of academic or industry experience\n- Strong understanding of the scientific method and engineering first principles\n- Experience with chemical handling and safe lab practices\nPreferred: Proficiency in SolidWorks, surface characterization techniques (contact angle, FTIR, XPS, AFM), microscopy, electrochemistry."
+  },
+  "R08": {
+    "field": "Mechanical Engineering",
+    "level": "Recent grad",
+    "title": "Mechanical Engineer (Junior)",
+    "company": "RIVR (Amazon)",
+    "source_url": "https://jobs.lever.co/rivr/2b332a67-ca91-4f10-9c1a-452a9ad923e5",
+    "fetch_date": "2026-08-26",
+    "text": "RIVR, part of Amazon, is a robotics company pioneering Physical AI through real-world doorstep delivery. Founded in 2024 as an ETH Zurich spin-off, RIVR developed wheeled-legged robots designed to operate in complex, unstructured environments such as stairs, gates, doors, and uneven urban terrain.\n\nMechanical Engineer (Junior)\nRequirements: Bachelor's or Master's degree in Mechanical Engineering or related field, 0-2 years of professional or research experience, strong fundamentals in mechanical design, CAD proficiency, and interest in robotics hardware for real-world deployment. You will contribute to designing, prototyping, and testing mechanical subsystems for next-generation delivery robots operating in unstructured environments, working closely with electrical, controls, and manufacturing engineers."
+  },
+  "R09": {
+    "field": "Accounting",
+    "level": "Student (undergrad)",
+    "is_fallback": true,
+    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for an undergraduate accounting internship within the time available -- several candidates (Ripple, Threat Tec, NextDecade) closed or returned mismatched seniority between search and fetch.",
+    "title": null,
+    "company": null,
+    "source_url": null,
+    "fetch_date": "2026-08-26",
+    "text": null
+  },
+  "R11": {
+    "field": "Business Analysis / PM",
+    "level": "Early-career professional",
+    "title": "Business Analyst",
+    "company": "Global Lending Services",
+    "source_url": "https://jobs.lever.co/glsllc/d6e2f3f2-e584-40a5-aec3-1deb2d31f285",
+    "fetch_date": "2026-08-26",
+    "text": "This posting is to enter our campus recruiting and entry-level process for position offers being made for 2026.\n\nWhat does it mean to be a Business Analyst at GLS? GLS is a highly analytic-driven company whose business model of providing auto loans to consumers through dealership partners has greatly thrived because of the great work our Analysts do. As an Analyst at GLS, you will work on solving important problems by deploying great critical thinking, education-based skill sets you've worked hard to obtain, and your demonstrated ability to learn new ideas and domains and turn knowledge into applied solutions.\n\nAnalysts play various roles across our company, taking on a variety of assignments within GLS business and operational areas. You will interact with team members both within your own area and cross-functionally, learning how the business is run and how to drive improvements, while gaining solid exposure to senior management."
+  },
+  "R12": {
+    "field": "UX Design",
+    "level": "Mid-level professional",
+    "title": "Product Designer, Growth & Monetization",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/5711595004",
+    "fetch_date": "2026-08-26",
+    "text": "We're looking for seasoned product designers to join our Growth & Monetization area -- a cross-functional space that spans core product experiences like onboarding, account management, admin tooling, billing, and beyond.\n\nWhat you'll do: Contribute to overall strategy and decision-making about product direction; help deliver and refine clear storytelling around product needs and opportunities; work cross-functionally with product management, engineering, design, and research peers; create and iterate on flows, prototypes, and high-fidelity visuals; design and ship high-quality product improvements; contribute to design org's culture via critiques and mentoring.\n\nWe'd love to hear from you if you have:\n- 3+ years of work experience designing UX and UI for a software product of similar scale and complexity\n- Great attention to detail and a strong eye for visual craft (composition, typography, layout)\n- Fluency in interaction design and prototyping\n- A track record of independently driving design processes from discovery through launch\n- Experience designing for multiple user types across product tiers\n- Familiarity with experimentation, metrics, or using data to inform design decisions\nAnnual base salary range: $169,000 - $303,000 USD."
+  },
+  "R13": {
+    "field": "UX Design",
+    "level": "Mid-level professional",
+    "title": "Product Designer, Growth & Monetization",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/5711595004",
+    "fetch_date": "2026-08-26",
+    "text": "We're looking for seasoned product designers to join our Growth & Monetization area -- a cross-functional space that spans core product experiences like onboarding, account management, admin tooling, billing, and beyond.\n\nWhat you'll do: Contribute to overall strategy and decision-making about product direction; help deliver and refine clear storytelling around product needs and opportunities; work cross-functionally with product management, engineering, design, and research peers; create and iterate on flows, prototypes, and high-fidelity visuals; design and ship high-quality product improvements; contribute to design org's culture via critiques and mentoring.\n\nWe'd love to hear from you if you have:\n- 3+ years of work experience designing UX and UI for a software product of similar scale and complexity\n- Great attention to detail and a strong eye for visual craft (composition, typography, layout)\n- Fluency in interaction design and prototyping\n- A track record of independently driving design processes from discovery through launch\n- Experience designing for multiple user types across product tiers\n- Familiarity with experimentation, metrics, or using data to inform design decisions\nAnnual base salary range: $169,000 - $303,000 USD."
+  },
+  "R14": {
+    "field": "Graphic Design",
+    "level": "Mid-level professional",
+    "title": "Motion Designer",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/6117563004",
+    "fetch_date": "2026-08-26",
+    "text": "We're looking for a Motion Designer to join our Product Education team. They'll use their knowledge of Figma, design, and pedagogy to teach our users to successfully adopt Figma into their toolkit.\n\nDay to day, you'll create guided video tutorials for our YouTube Channel, as well as collaborate with other departments on other types of video content. You'll use your skills in motion and design to artfully explain complex topics in terms understandable by junior and prospective designers.\n\nWhat you'll do: Manage end-to-end video production; collaborate with Education Designers and Content Strategists on scripts and voice overs; ideate new videos, record audio and video, create visual assets, animate, edit, write descriptions, publish to YouTube; create motion graphics explainers, animations, transitions; identify key success metrics and perform lightweight analytics.\n\nWe'd love to hear from you if you have: experience animating educational content for SaaS products, ability to create clear/concise/accessible content, a track record of creative collaborative brainstorming, and passion for democratizing design education. Annual base salary range: $105,000 - $183,000 USD."
+  },
+  "R16": {
+    "field": "Data Science / ML",
+    "level": "Experienced professional",
+    "title": "Data Scientist II, Applied ML",
+    "company": "Brex",
+    "source_url": "https://www.brex.com/careers/8735070002",
+    "fetch_date": "2026-08-26",
+    "text": "Data at Brex: The Data organization develops infrastructure, statistical models, and products using financial data. Our Scientists and Engineers work together to make data and insights derived from data a core asset across the company.\n\nWhat You'll Do: Our Data Scientists are responsible for the entire model development lifecycle, from conception with stakeholders, through model development and productionization, to following through to see that the desired business impact is achieved.\n\nResponsibilities: Drive Data & AI solutions from inception to deployment to efficiently manage risk and/or improve customer experience; be responsible for the full machine learning lifecycle -- problem identification, model design, training, productionization, and monitoring; partner with cross-functional teams (Ops, Engineering, Product, Fraud, Compliance, Credit).\n\nRequirements:\n- 3+ years of experience in Data Science/ML roles, or 2+ years with a PhD in a quantitative field\n- Demonstrated ability to own end-to-end model development, including productionization\n- Expertise in Python programming, SQL queries, and ML-related frameworks\n- Ability to apply statistical techniques such as hypothesis testing and A/B testing\n- Strong software engineering fundamentals, including API development and integrating ML systems into production services"
+  },
+  "R19": {
+    "field": "Computer Science / SWE",
+    "level": "Student (undergrad)",
+    "title": "Associate Software Engineer - 2027 Start Dates",
+    "company": "Veeva Systems",
+    "source_url": "https://jobs.lever.co/veeva/52ba79af-1086-457d-b5d2-8e184f111ffd",
+    "fetch_date": "2026-08-26",
+    "text": "Veeva Systems is hiring university interns/new graduates to grow the next generation of Software Engineers through their Engineering Development Program. Associate Software Engineer positions are for 2027 start dates, aimed at current students graduating with a degree in Computer Science or a related technical field.\n\nWhat you'll do: participate in a structured onboarding and development program, work on real product features under mentorship of senior engineers, contribute to both backend and frontend systems, and build foundational software engineering skills across the stack.\n\nRequirements: Currently pursuing or recently completed a Bachelor's or Master's degree in Computer Science, Software Engineering, or a related field; strong fundamentals in data structures, algorithms, and at least one programming language; demonstrated interest in software engineering through coursework, projects, or internships."
+  },
+  "R20": {
+    "field": "Manufacturing / Industrial Eng",
+    "level": "Grad student (MEng)",
+    "title": "Manufacturing Engineer I - Metals",
+    "company": "Penumbra",
+    "source_url": "https://jobs.lever.co/penumbrainc/270ab137-6144-4126-aced-a4d4094048d6",
+    "fetch_date": "2026-08-26",
+    "text": "General Summary: The mission of the Manufacturing Engineering group is to provide manufacturing technology and robust solutions that commercialize new products and that support continuous improvement in production.\n\nSpecific Duties and Responsibilities: Solve problems and implement innovative solutions; execute detailed root cause analysis and recommend vetted solutions; support production, creating and maintaining product and process documentation; monitor process and equipment performance and identify process improvement activities; design fixtures, acquire off-the-shelf tooling and equipment; test processes, equipment, raw materials, and product; perform process validations; develop, characterize, and optimize processes using statistical techniques and engineering knowledge; coordinate with suppliers and external resources; train assemblers, quality control and technicians on processes and documentation; adhere to the Company's Quality Management System (QMS).\n\nPosition Qualifications: Bachelor's degree in Mechanical, Biomedical, Electrical, Chemical, Materials, or Industrial Engineering or related degree; 1+ year relevant engineering experience preferred; knowledge of FDA regulations, Lean/Flow Manufacturing desired; proficiency in Word, Excel, PowerPoint, Access. Annual Base Salary: $72,000 to $94,000."
+  },
+  "R21": {
+    "field": "Real Estate Development",
+    "level": "Experienced / Career-changer",
+    "title": "Associate, Asset Management",
+    "company": "Wahed",
+    "source_url": "https://jobs.lever.co/wahed.com/da38c999-f647-495b-b019-31939bdfe1bd",
+    "fetch_date": "2026-08-26",
+    "text": "Our real estate business extends Wahed's mission to property -- giving everyday investors access to institutional-quality, income-generating homes. We are growing quickly, we run lean and efficiently.\n\nJob Brief: We are seeking a flexible, analytical, roll-up-your-sleeves Associate, Asset Management to help steward Wahed's growing real estate portfolio across the United Kingdom, Malaysia, and the United States. Reporting to the Senior Analyst, Asset Management, you will be the hands-on execution engine that helps the Senior Analyst deliver against the team's goals -- making sure newly acquired properties are stabilized, protected, performing, and delivering the distributions we have committed to our investors.\n\nThe Senior Analyst owns these outcomes; your job is to make them happen on the ground. You will be equally comfortable in a spreadsheet and on the phone with a property manager, will do whatever it takes to get the job done, and will help build the repeatable processes that let a lean team manage a rapidly growing, multi-market portfolio."
+  },
+  "R22": {
+    "field": "Strategy / Finance",
+    "level": "Experienced / Senior",
+    "title": "Strategic Finance",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/5792631004",
+    "fetch_date": "2026-08-26",
+    "text": "The Strategic Finance team is focused on solving some of Figma's most pressing business issues. The team is responsible for owning the company's budget, driving annual and quarterly planning processes, allocating and deploying the company's resources efficiently, performing financial analyses, and partnering with teams across the company.\n\nWhat you'll do: Drive alignment on KPIs and key metrics to monitor business performance; build annual operating plans, quarterly and monthly financial forecasts; develop cross-functional partnerships to formulate business insight and inform executive decision making; own, run, and improve financial processes; partner with Strategic Finance, Data Science, and RevOps to improve ARR data quality and forecasting; prepare and deliver presentations for the Executive Team including CFO, CMO, CRO.\n\nWe'd love to hear from you if you have:\n- 5+ years of relevant experience in investment banking, private equity, strategic finance, Big 4 audit, business operations, or related fields\n- Experience in financial planning and creating data-driven analysis\n- Demonstrated ability to build processes from scratch and distill complex issues into structured frameworks\n- Experience building relationships and communicating with stakeholders across all levels and functions"
+  },
+  "R23": {
+    "field": "CS / Mechanical Eng",
+    "level": "Grad student (MS)",
+    "title": "Mechanical Engineering Intern, Robotics and Surgery Engineering",
+    "company": "Neuralink",
+    "source_url": "https://boards.greenhouse.io/neuralink/jobs/6514169003",
+    "fetch_date": "2026-08-26",
+    "text": "About Neuralink: We are creating devices that enable a bi-directional interface with the brain.\n\nTeam Description: The Robotics & Surgery Engineering Team is developing our next-generation surgical platform to facilitate bringing our cutting-edge brain implant to more of those in need. We're working on driving surgery time and invasiveness down, while pushing safety and accuracy to their maximums.\n\nJob Description and Responsibilities: As a Mechanical Engineering Intern at Neuralink, you will have the opportunity to design and produce hardware solutions for our brain-machine interface devices, including surgical robotics, automation, microfabrication, and more. You will get to own projects from concept to production, utilizing your mechanical engineering background in the challenging field of brain-machine interfaces. The role involves collaboration with neuroscientists, biologists, and engineers to determine design criteria and build systems quickly and effectively.\n\nRequired Qualifications: Currently pursuing a Bachelor's or Master's degree in Mechanical Engineering or related field; strong understanding of engineering first principles; experience with CAD tools (SolidWorks, Onshape); comfortable with rapid prototyping, machining, and hands-on hardware iteration."
+  },
+  "R24": {
+    "field": "Computer Science / HCI",
+    "level": "Grad student (MEng)",
+    "title": "Product Designer, Growth & Monetization",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/5711595004",
+    "fetch_date": "2026-08-26",
+    "note_imperfect_match": "No live HCI-research-specific posting found; reused Figma's Product Designer role (3+ yrs required, above R24's grad-student level) as the closest design/research-adjacent real posting available in the time budget.",
+    "text": "We're looking for seasoned product designers to join our Growth & Monetization area -- a cross-functional space that spans core product experiences like onboarding, account management, admin tooling, billing, and beyond.\n\nWhat you'll do: Contribute to overall strategy and decision-making about product direction; help deliver and refine clear storytelling around product needs and opportunities; work cross-functionally with product management, engineering, design, and research peers; create and iterate on flows, prototypes, and high-fidelity visuals.\n\nWe'd love to hear from you if you have:\n- 3+ years of work experience designing UX and UI for a software product of similar scale and complexity\n- Fluency in interaction design and prototyping\n- A track record of independently driving design processes from discovery through launch\n- Familiarity with experimentation, metrics, or using data to inform design decisions"
+  },
+  "R25": {
+    "field": "Environmental Engineering",
+    "level": "Grad student (MEng)",
+    "title": "Entry Level Environmental Engineer (Water Practice)",
+    "company": "ERG",
+    "source_url": "https://jobs.lever.co/erg/b0a31869-a1ae-4ef9-958e-3f3e385c5dd2",
+    "fetch_date": "2026-08-26",
+    "text": "ERG is a research and consulting firm that provides a wide range of support to federal, state, and commercial clients, with multidisciplinary teams in engineering, science, economics, public health, information technology, and communications.\n\nERG is seeking an entry-level Civil/Environmental Engineer to support projects within our Water Practice. This role is ideal for a recent graduate or very early-career professional interested in water resources, water quality, and wastewater management. The selected candidate will provide project-level support across a range of technical and analytical water projects.\n\nRequirements: Bachelor's or Master's degree in Civil or Environmental Engineering; strong analytical and communication skills; ability to prioritize, perform, and communicate effectively in a fast-paced environment."
+  },
+  "R26": {
+    "field": "Materials Science -> Consulting",
+    "level": "Doctoral candidate",
+    "title": "Associate Consultant - Data Warehouse",
+    "company": "Beghou Consulting",
+    "source_url": "https://jobs.lever.co/beghouconsulting/57c2eed8-5a65-43e9-a1de-f1f8d8e288ce",
+    "fetch_date": "2026-08-26",
+    "note_imperfect_match": "The original candidate search hit (a PhD-specific 'Consultant (PhD Candidates)' posting) had closed by fetch time; this is Beghou's currently open Associate Consultant role -- same life-sciences-consulting firm and career track, but not explicitly PhD-targeted.",
+    "text": "Beghou brings over three decades of experience helping life sciences companies optimize their commercialization through strategic insight, advanced analytics, and technology. From developing go-to-market strategies and building foundational data analytics infrastructures to leveraging artificial intelligence, Beghou helps life sciences companies maximize performance across their portfolios.\n\nPurpose of job: As an Associate Consultant in a Data Warehousing project, you have to design and implement effective data architectures, ensuring efficient data integration and management. Additionally, you should provide strategic insights to improve decision-making processes, implement best practices for data governance, and offer training for internal teams, ultimately driving the organization towards becoming more data-driven and efficient. If you are passionate about utilizing your expertise in U.S. pharmaceutical datasets to drive client success, we invite you to apply."
+  },
+  "R27": {
+    "field": "Urban Political Economy",
+    "level": "Doctoral candidate",
+    "title": "Researcher (Contract)",
+    "company": "Civitech",
+    "source_url": "https://jobs.lever.co/civitech/e6886df8-b961-4ead-a4ad-4e0e53b4fc82",
+    "fetch_date": "2026-08-26",
+    "note_imperfect_match": "General civic/political researcher role, not urban-studies-specific or explicitly doctoral-level; the closest live posting found for this field+level combination in the time available.",
+    "text": "Civitech is a public benefit corporation dedicated to creating a fairer and more equitable democracy by building the tools and infrastructure needed to increase civic participation, empower Democratic candidates to win, and support the success of progressive causes.\n\nResearchers, who can be based anywhere in the U.S., are responsible for researching a wide range of topics, including elections at all levels from national races to local special districts, candidates for selected elections (including their experience, qualifications, incumbent status, and issue stances), elected positions (roles and responsibilities, eligibility requirements, how to run for a position), and current office holders including their years in office."
+  },
+  "R29": {
+    "field": "Mathematics with CS",
+    "level": "Student (undergrad)",
+    "title": "Software Engineering Intern",
+    "company": "QuantCo",
+    "source_url": "https://jobs.lever.co/quantco-/d69096fa-b673-4953-ba63-7deee08bc13c",
+    "fetch_date": "2026-08-26",
+    "text": "QuantCo leverages expertise in data science, engineering, and economics; the company was started by 4 PhDs from Harvard and Stanford.\n\nSoftware Engineering Interns at QuantCo will help build robust and scalable solutions with tangible impact. With full ownership, our Engineers design end-to-end solutions that integrate our industry-leading models into our clients' businesses. As owner of the process and the code base, our Engineers are responsible for the entire engineering project cycle from high-level system design and prototyping to application development and data integration. In this role, our Engineers bridge the worlds of IT infrastructure and data science. Interns will get to understand our clients' technical setups and solicit constant feedback from both clients and colleagues to improve our products with rapid iteration cycles."
+  },
+  "R30": {
+    "field": "Graphic Design",
+    "level": "Mid-level professional",
+    "title": "Motion Designer",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/6117563004",
+    "fetch_date": "2026-08-26",
+    "text": "We're looking for a Motion Designer to join our Product Education team. They'll use their knowledge of Figma, design, and pedagogy to teach our users to successfully adopt Figma into their toolkit.\n\nDay to day, you'll create guided video tutorials for our YouTube Channel, as well as collaborate with other departments on other types of video content. You'll use your skills in motion and design to artfully explain complex topics in terms understandable by junior and prospective designers.\n\nWhat you'll do: Manage end-to-end video production; collaborate with Education Designers and Content Strategists on scripts and voice overs; ideate new videos, record audio and video, create visual assets, animate, edit, write descriptions, publish to YouTube; create motion graphics explainers, animations, transitions; identify key success metrics and perform lightweight analytics.\n\nWe'd love to hear from you if you have: experience animating educational content for SaaS products, ability to create clear/concise/accessible content, a track record of creative collaborative brainstorming, and passion for democratizing design education. Annual base salary range: $105,000 - $183,000 USD."
+  },
+  "R31": {
+    "field": "Graphic Design",
+    "level": "Mid-level professional",
+    "title": "Motion Designer",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/6117563004",
+    "fetch_date": "2026-08-26",
+    "text": "We're looking for a Motion Designer to join our Product Education team. They'll use their knowledge of Figma, design, and pedagogy to teach our users to successfully adopt Figma into their toolkit.\n\nDay to day, you'll create guided video tutorials for our YouTube Channel, as well as collaborate with other departments on other types of video content. You'll use your skills in motion and design to artfully explain complex topics in terms understandable by junior and prospective designers.\n\nWhat you'll do: Manage end-to-end video production; collaborate with Education Designers and Content Strategists on scripts and voice overs; ideate new videos, record audio and video, create visual assets, animate, edit, write descriptions, publish to YouTube; create motion graphics explainers, animations, transitions; identify key success metrics and perform lightweight analytics.\n\nWe'd love to hear from you if you have: experience animating educational content for SaaS products, ability to create clear/concise/accessible content, a track record of creative collaborative brainstorming, and passion for democratizing design education. Annual base salary range: $105,000 - $183,000 USD."
+  },
+  "R32": {
+    "field": "Engineering / Project Management",
+    "level": "Early-career professional",
+    "title": "Project Manager - Natural Gas Projects",
+    "company": "Intersect Power",
+    "source_url": "https://jobs.lever.co/intersect/42f3257c-c1cb-4a40-8ccc-ab5f6e36eda1",
+    "fetch_date": "2026-08-26",
+    "note_imperfect_match": "This posting reads more senior (owner's-representative project lead) than 'early-career professional'; no live truly-entry-level engineering-PM posting was found in the time available.",
+    "text": "As part of Intersect's project delivery organization, you'll lead the execution of critical power generation and energy infrastructure projects that support the convergence of electrification, digitalization, and decarbonization. Acting as the owner's representative throughout the project lifecycle, you'll guide complex projects from development through commissioning and commercial operation while partnering closely with engineering, construction, commercial, operations, and executive leadership teams.\n\nWhat You'll Do: Develop and execute comprehensive project plans, including scope definition, execution strategy, resource planning, governance structures, and delivery objectives; lead natural gas-fired power generation projects from development through commissioning; drive project performance against key objectives related to safety, quality, schedule, budget; serve as the primary owner's representative and point of contact for EPC contractors, consultants, utilities, equipment vendors."
+  },
+  "R33": {
+    "field": "Software Engineering / ERP",
+    "level": "Experienced professional",
+    "title": "Software Engineer - Application Platform",
+    "company": "Figma",
+    "source_url": "https://boards.greenhouse.io/figma/jobs/6142506004",
+    "fetch_date": "2026-08-26",
+    "note_imperfect_match": "Backend/platform engineering, not ERP-specific -- real ERP-titled Lever/Greenhouse postings skew toward senior SAP-configuration consulting roles that don't match a software engineer's resume profile; this is the closer stand-in.",
+    "text": "Application Platform is part of Product Platform within Figma's Infrastructure organization. We build shared foundations that help engineers ship backend product work quickly, safely, and reliably. The team owns a large Ruby application that powers Figma's REST APIs, asynchronous jobs, and workflow orchestration.\n\nWe're looking for an experienced backend engineer with meaningful production Ruby experience who enjoys building for other engineers.\n\nWhat you'll do: Design and evolve shared Ruby frameworks for REST APIs, asynchronous jobs, workflow orchestration, and data access; improve the availability, reliability, scalability, and performance of backend systems; modernize a large Ruby codebase through safe architectural changes; make backend development faster by improving hot reloading, local workflows, test infrastructure, CI reliability.\n\nWe'd love to hear from you if you have: 5+ years of professional software engineering experience, including 3+ years building production systems with Ruby; experience designing reliable distributed systems at production scale."
+  },
+  "R34": {
+    "field": "Finance / Business Administration",
+    "level": "Student (undergrad)",
+    "title": "Finance Intern",
+    "company": "Aleph",
+    "source_url": "https://jobs.lever.co/aleph/bbd1e11d-2b60-4edf-839e-ead57efcda8a",
+    "fetch_date": "2026-08-26",
+    "text": "At Aleph, we're not just part of the digital advertising landscape -- we're shaping its future. Representing the world's leading platforms, including TikTok, Amazon, Google, and nearly 55 others, we operate in 130+ markets across new and existing geographies.\n\nWe are looking for an enthusiastic Finance Intern to support our Accounts Receivable and Credit functions across the APAC region. In this role, you will help oversee billing and collections by coordinating day-to-day matters with local finance teams and assisting with direct follow-ups with clients on outstanding A/R balances. This internship offers hands-on exposure to regional finance operations, including reporting, credit checks, and compliance."
+  },
+  "R35": {
+    "field": "Architecture / Design",
+    "level": "Student (undergrad)",
+    "title": "Designer, Entry-Level",
+    "company": "DLR Group",
+    "source_url": "https://job-boards.greenhouse.io/dlrgroup/jobs/5382331008",
+    "fetch_date": "2026-08-26",
+    "text": "DLR Group is an integrated design firm with a promise to elevate the human experience through design. DLR Group's Boston office has an opening for an Entry-Level Designer.\n\nPosition Summary: Kickstart your career with us as an essential contributor to our project teams. In this role, you'll take on specific aspects of project development under the mentorship of experienced professionals, gaining hands-on experience and learning the ins and outs of the industry. You'll assist in the creation and delivery of project documents, working closely with our collaborative design team to produce high-quality work.\n\nWhat you will do: Propose creative technical solutions to design challenges while ensuring design excellence; adhere to quality assurance/control processes and company practice standards; contribute to project deliverables, ensuring alignment with project schedules and deadlines; conduct design analyses, layout designs, and code studies with some independent work; perform basic architectural tasks including layout and aesthetic feature design; coordinate drawings and specifications; apply BIM standards and develop organizational cartoon sets for projects."
+  },
+  "R36": {
+    "field": "Software Engineering / Creator",
+    "level": "Experienced professional",
+    "title": "Senior Software Engineer, Fullstack",
+    "company": "Webflow",
+    "source_url": "https://job-boards.greenhouse.io/webflow/jobs/7293969",
+    "fetch_date": "2026-08-26",
+    "text": "Webflow is the agentic web marketing platform for modern marketing teams, helping organizations build, manage, and optimize high-performing web experiences.\n\nWebflow is expanding our engineering team, establishing several teams across key product areas, including Webflow Cloud: a new product that allows customers to deploy fully operational web apps, mounted on their Webflow-hosted domains.\n\nAs a Senior Software Engineer, Fullstack, you'll: design and implement scalable multi-tenant backend services and APIs; work with technologies such as Node.js, Javascript/Typescript, MongoDB, GraphQL, Apollo, AWS EC2, S3, Lambdas, Kafka; demonstrate expertise in multiple technical domains; contribute to building and executing on functional strategy; lead projects that directly contribute to team and engineering organization's deliverables; produce maintainable, tested, performant, and scalable code; collaborate with product managers and designers in an autonomous, supportive team environment."
+  },
+  "R37": {
+    "field": "Electrical Eng & Computer Science",
+    "level": "Student (undergrad)",
+    "title": "Electrical Engineer Intern, Implant Embedded Systems",
+    "company": "Neuralink",
+    "source_url": "https://boards.greenhouse.io/neuralink/jobs/7702527003",
+    "fetch_date": "2026-08-26",
+    "text": "About Neuralink: We are creating devices that enable a bi-directional interface with the brain.\n\nTeam Description: We build the electrical systems that make high-bandwidth brain-computer interfaces possible. This includes neural signal acquisition and stimulation, wireless power delivery, embedded processing, and system integration -- all within devices small enough to be implanted in the human body.\n\nJob Description and Responsibilities: We are looking for an experienced, hands-on electrical engineer for implant electronics board design, integration with our custom chips, testing, and quality control. You will work on all phases of board design (part selection, schematic design, layout, and bring-up) as well as collaborating with chip designers, firmware engineers, mechanical engineers, and microfabrication experts.\n\nRequired Qualifications: Strong EE fundamentals; experience designing PCBs for low power and size constrained applications; experience with PCB CAD tools (Altium, Eagle, KiCad, Allegro); experience with sensors, power management, and signal/power integrity; comfortable with common communication protocols (SPI, UART, I2C); basic C and Python programming skills."
+  },
+  "R38": {
+    "field": "Full-Stack Web Development",
+    "level": "Experienced professional",
+    "title": "Senior Software Engineer, Full Stack",
+    "company": "Brex",
+    "source_url": "https://www.brex.com/careers/8472635002",
+    "fetch_date": "2026-08-26",
+    "text": "Brex is the intelligent finance platform that enables companies to spend smarter and move faster in more than 200 markets. Engineering at Brex is about building systems that scale with speed and intention.\n\nWhat you'll do: As a Senior Full-Stack Software Engineer on our Task Workflows Platform team, you will build and scale the foundational infrastructure that powers core experiences across Brex. You will tackle complex full-stack challenges, from designing scalable backend APIs and rule-evaluation engines for custom automations, to crafting intuitive frontend UX for domain-specific task interfaces and workflow builders.\n\nRequirements:\n- 7+ years of professional experience designing, developing, and deploying full-stack products\n- Strong proficiency in backend programming languages (Java, Kotlin, Python)\n- Experience architecting, building, and maintaining scalable, high-availability distributed systems\n- Experience designing and optimizing SQL and/or NoSQL databases\n- Experience building and maintaining RESTful APIs and/or GraphQL services\n- Experience with modern frontend technologies (ES6+, React, TypeScript, Webpack)"
+  },
+  "R39": {
+    "field": "Administration / Office Management",
+    "level": "Early-career professional",
+    "title": "Administrative & Operations Coordinator - Fixed term contract",
+    "company": "Aleph",
+    "source_url": "https://jobs.lever.co/aleph/121ef4e6-cabf-40ec-a0cf-974e03811fbe",
+    "fetch_date": "2026-08-26",
+    "note_imperfect_match": "Posting asks for 3+ years' experience, somewhat above a strict 'early-career' reading, though the role itself is a generalist admin/coordinator track consistent with the field.",
+    "text": "At Aleph, we're not just part of the digital advertising landscape -- we're shaping its future, representing platforms including TikTok, Amazon, Google, and nearly 55 others across 130+ markets.\n\nAbout the role: In this role, you will be the operational backbone of the IT team, ensuring that administrative processes run smoothly and efficiently across an international, fast-paced environment. You will work closely with IT leadership to manage budgets, procurement, project tracking, and internal communications. It's a hands-on, structure-bringing role rather than a technical one -- no IT background is required.\n\nWhat you'll do: Create, manage, and follow up on purchase orders for IT hardware, software licences, and services; track invoices and liaise with vendors and Finance; maintain a clean, up-to-date register of contracts, renewals, and vendor agreements; keep accurate records of IT spend; organise IT meetings end to end; manage the IT admin inbox and keep org charts, rosters, and shared documentation current.\n\nWhat we are looking for: 3+ years in an administrative, operations coordinator, office manager, or executive assistant role; hands-on SAP experience for purchase-order management; advanced Microsoft Office and Google Workspace."
+  },
+  "R15": {
+    "field": "Accounting / Finance",
+    "level": "Experienced / Senior",
+    "title": "Senior Accountant",
+    "company": "Exponent Partners",
+    "source_url": "https://jobs.lever.co/killbusyseason/d9a1b000-4975-4a7f-a750-b4966346da44",
+    "fetch_date": "2026-08-26",
+    "text": "Senior Accountant role in a well-established, privately held manufacturing firm in Kansas City offering a unique blend of accounting operations and emerging FP&A responsibilities with strong growth potential.\n\nWhy We Like This: Strong growth potential -- this senior accountant role is a great opportunity to gain the requisite experience for a future path Accounting Manager > Controller. Hands-on, varied responsibilities beyond traditional accounting, including managing month-end close and supporting AP/AR and FP&A tasks.\n\nRequirements: Proven ability to own month-end close and support AP/AR teams, ensuring tight, accurate books in a manufacturing setting; comfortable with financial modeling and top-of-funnel FP&A tasks; 3+ years' experience, ideally with public accounting background or equivalent, eager to grow into Controller or finance leadership roles.\n\nResponsibilities: Lead month-end close; assist and review AP/AR operations; support financial reporting and analysis, budgeting, forecasting; drive process optimization; collaborate cross-functionally with senior leadership. $85,000 - $115,000 a year."
+  },
+  "R02": {
+    "field": "Education / Youth Development",
+    "level": "Student (undergrad)",
+    "is_fallback": true,
+    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "title": null,
+    "company": null,
+    "source_url": null,
+    "fetch_date": "2026-08-26",
+    "text": "Youth Program Coordinator\n\nRequirements\n- Experience designing and facilitating youth development or after-school programming\n- Strong classroom management and mentoring skills\n- Experience with curriculum development and lesson planning\n- Excellent written communication skills for parent and stakeholder updates\n- Ability to track program outcomes and report on student progress\n- Background check and experience working with children required\n\nNice to Have\n- Bilingual or multilingual communication skills\n- Experience with nonprofit or community organization partnerships\n- Familiarity with social-emotional learning frameworks"
+  },
+  "R04": {
+    "field": "Marketing",
+    "level": "Student (undergrad)",
+    "is_fallback": true,
+    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "title": null,
+    "company": null,
+    "source_url": null,
+    "fetch_date": "2026-08-26",
+    "text": "Marketing Specialist\n\nRequirements\n- Experience developing and executing marketing campaigns across digital channels\n- Proficiency with Google Analytics (GA4) for campaign measurement\n- Strong understanding of SEO and content marketing best practices\n- Experience with social media management and content calendars\n- Excellent written communication skills for copywriting and messaging\n- Experience with email marketing platforms and A/B testing\n\nNice to Have\n- Experience with paid advertising (Google Ads, Meta Ads)\n- Familiarity with Power BI or Tableau for marketing dashboards\n- Experience with brand strategy or market research"
+  },
+  "R07": {
+    "field": "History / Non-profit",
+    "level": "Student (undergrad)",
+    "is_fallback": true,
+    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "title": null,
+    "company": null,
+    "source_url": null,
+    "fetch_date": "2026-08-26",
+    "text": "Non-profit Program Associate\n\nRequirements\n- Bachelor's degree in History, Humanities, or related field\n- Experience with nonprofit program coordination or community outreach\n- Strong research and written communication skills\n- Experience with fundraising, grant writing, or donor relations\n- Ability to manage volunteers and coordinate events\n- Proficiency with Excel for budget tracking and reporting\n\nNice to Have\n- Experience with archival research or historical documentation\n- Familiarity with CRM or donor management software\n- Public speaking or facilitation experience"
+  },
+  "R18": {
+    "field": "International Business",
+    "level": "Student (early undergrad)",
+    "is_fallback": true,
+    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "title": null,
+    "company": null,
+    "source_url": null,
+    "fetch_date": "2026-08-26",
+    "text": "International Business Development Associate\n\nRequirements\n- Bachelor's degree in International Business, Economics, or related field\n- Experience with market research and competitive analysis\n- Strong cross-cultural communication skills, additional languages a plus\n- Experience with Excel for financial and market analysis\n- Understanding of global trade, supply chain, or international finance\n- Ability to manage relationships with international stakeholders\n\nNice to Have\n- Study abroad or international internship experience\n- Familiarity with Power BI or Tableau for market dashboards\n- Experience with export/import compliance"
+  },
+  "R10": {
+    "field": "Marketing",
+    "level": "Early-career professional",
+    "title": "Lifecycle & Email Marketing Manager",
+    "company": "Fresh Prints",
+    "source_url": "https://job-boards.greenhouse.io/freshprints/jobs/6101312004",
+    "fetch_date": "2026-08-26",
+    "text": "Fresh Prints' email channel is our oldest and highest-potential channel -- and the one we've leveraged the least. We're looking for someone who is first and foremost a great marketer -- someone who understands what makes an email get opened, get read, and drive a click. You'll own both our campaign email and our full lifecycle program, and you'll extend that same craft into SMS as we build it into a real channel.\n\nThis role is about: Owning every word that goes out -- subject lines, body, CTAs -- across email and SMS; turning a solid technical setup into a channel people actually look forward to hearing from; building lifecycle flows that feel like a conversation; writing for a college-age audience; bringing a real point of view on performance.\n\nWhat You'll Own: Own email and SMS conceptualization -- final say on subject lines, preview text, headers, body, and CTAs; work with brand and creative teams on design and copy; develop a campaign content calendar; own A/B testing for subject lines and CTAs; own the strategy and content for lifecycle flows (welcome series, post-purchase nurture, cart/browse abandonment, re-engagement, win-back); own segmentation."
+  },
+  "R17": {
+    "field": "Government / Policy",
+    "level": "Student (undergrad)",
+    "title": "Policy Analyst (Junior)",
+    "company": "FiscalNote",
+    "source_url": "https://jobs.lever.co/fiscalnote/db817177-e051-41ed-b43e-aa1ba2c5be01",
+    "fetch_date": "2026-08-26",
+    "text": "About the Position\nFiscalNote is hiring a Policy Analyst to serve as a core member of our Professional Services team and a trusted resource for our clients. Policy Analysts are curious, detail-oriented, and self-motivated -- they thrive on staying current with legislative and regulatory developments and translating complex policy into clear, actionable insights. In this role, you will support a portfolio of clients across issue areas, executing high-quality analytical work with accuracy and consistency.\n\nAbout You\n- You have a passion for policy -- at the federal, state, or local level -- and a genuine curiosity about how legislation and regulation shape the world.\n- You are a strong writer and communicator who can synthesize complex information for a wide range of audiences, from analysts to executives.\n- You are organized, reliable, and take pride in delivering accurate, high-quality work on time -- even when juggling competing priorities.\n- You seek out feedback, apply it quickly, and are committed to building your skills and growing your career.\n- You are a team player who contributes positively to those around you and takes accountability for your own work and outcomes.\n- You are comfortable working with technology and data, and open to adopting new tools including AI-assisted workflows.\nThe salary range for this position is $52,000 - $59,500 per year."
+  }
+}

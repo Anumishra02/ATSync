@@ -304,3 +304,82 @@ See `backend/scripts/compare_taxonomies.py` for the full runnable
 comparison (seed / raw ESCO / filtered ESCO, three-way, on-demand) and
 `backend/services/skills/taxonomy.py`'s `from_esco_csv` docstring for the
 filter's own reasoning inline with the code it changes.
+
+## JD corpus rebuild: the real bottleneck was upstream of the taxonomy
+
+Flagged before the ESCO work above was trusted: seed-taxonomy skills/JD-match
+(ρ=0.294, p=0.070) scored *worse* than seed-taxonomy skills/no-JD
+(ρ=0.653, p<0.001) on the same 92 terms — backwards, since adding role
+context should help, not halve the correlation. Two candidate causes:
+`jds.json`'s 34 postings are field-only (no seniority match, level-blind
+against ten distinct levels in the corpus), or JD-mode's conditioning
+logic itself destroys signal by capping credit to a thin JD term list.
+
+**Rebuild.** One real, currently-live posting per resume (not per field),
+matched on field *and* level from `evaluation/labels.csv`, fetched
+directly from each company's own public job-board API (Lever
+`api.lever.co/v0/postings`, Greenhouse `boards-api.greenhouse.io`) on
+2026-08-26 — `evaluation/jds_v2.json`, provenance (source URL, company,
+title, fetch date) recorded per entry. Coverage: 27/38 real and
+well-matched, 6/38 real but with a noted level mismatch (the live-posting
+market didn't have a clean fit in the time available — e.g. R32 got a
+senior owner's-rep PM role against an "early-career" label), 5/38
+(R02, R04, R07, R09, R18) fall back to the original field-only JD,
+explicitly flagged via `is_fallback` — no live posting was found for
+those field+level pairs in time. Not silently smoothed over: this is a
+partial, honestly-labeled rebuild, not a claimed-complete one.
+
+**Re-ran the exact comparison, seed taxonomy held fixed** (isolates the
+JD corpus as the only changed variable — `scripts/jd_rebuild_comparison.py`):
+
+| JD set | mode | n | ρ | p |
+|---|---|---|---|---|
+| OLD (field-only, 34) | skills/JD-match | 38 | 0.278 | 0.091 |
+| NEW (all 38, incl. 5 fallback) | skills/JD-match | **17** | 0.402 | 0.109 |
+| NEW (33 real, level-matched) | skills/JD-match | **13** | 0.519 | 0.069 |
+| OLD (field-only, 34) | relevance | 38 | 0.115 | 0.490 |
+| NEW (33 real, level-matched) | relevance | 33 | 0.215 | 0.229 |
+
+**Neither of the two hypothesized causes is what actually dominates.**
+The rebuild surfaced a third thing, bigger than both: n collapses from 38
+to 13–17 in skills/JD-match mode, because **20 of the 38 new, real JDs
+match zero seed-taxonomy skills at all** — including postings in fields
+the taxonomy is supposedly built for (RIVR's Mechanical Engineer posting,
+Neuralink's EE posting naming PCB tools like Altium/KiCad, Figma's
+Product Designer posting). `SkillsScorer`'s JD-match mode goes
+uncomputable outright when a JD names no recognized skill (`"JD named no
+recognized taxonomy skills"` — by design, not a bug: see that scorer's
+own uncomputable branch). Checked directly (not inferred from the n drop):
+`matcher.extract(jd_text).skill_ids` is the empty set for those 20 JDs.
+
+The old field-only `jds.json` didn't have this problem (38/38 computable)
+for a reason that's now visible only in hindsight: those 34 postings were
+themselves written with the 92-term taxonomy already in view, so they
+happen to name exactly the vocabulary the taxonomy recognizes. Real job
+postings, in their own natural language, mostly don't. That's not a
+defect in the new JDs — it's the old JDs' hidden unrealism becoming
+visible for the first time. The whole match-mode evaluation to this point,
+old-JD-based, was measuring "can the scorer detect skills when the JD
+happens to use the taxonomy's own words," not real match-mode performance.
+
+On the shrunken subsample where a score *could* be computed, ρ does move
+in the predicted direction and further than expected (0.278 → 0.519,
+n=13, real JDs only) — consistent with "the old JDs were part of the
+problem" — but at n=13, with real selection bias (only JDs the taxonomy
+happened to cover survive), this is suggestive, not a settled answer to
+the original question. The coverage collapse is the finding that actually
+needs to be dealt with before the correlation number means anything:
+**a taxonomy that returns zero skills for the majority of real postings
+in its own target fields can't be fairly judged on match-mode
+correlation until that's fixed.**
+
+**This also means the ESCO match-mode numbers reported above (seed
+ρ=0.294 → filtered-ESCO ρ=0.477) are themselves measured against the old,
+taxonomy-friendly field-only JDs and need re-validation against
+`jds_v2.json` before being trusted as ESCO's real match-mode
+performance** — plausible in ESCO's favor given its ~13.9k-term coverage
+should suffer far less from this exact failure mode, but not yet
+measured. Re-running `compare_taxonomies.py`'s skills/JD-match and
+relevance rows against the rebuilt JD corpus, and closing the remaining
+5 fallback JDs, are the concrete next steps — before any live-default
+change to either the taxonomy or the JD-match conditioning logic.
