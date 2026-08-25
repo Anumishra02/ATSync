@@ -7,6 +7,43 @@ after the bug-3 (heading segmentation/vocab) and bug-2 (uncomputable
 quantification) fixes landed; bug-1 (hyphen-truncated bullets) is still
 unpatched, on purpose (see its entry).
 
+## Headline: the JD-match benchmark was contaminated, and the seed taxonomy can't read real postings
+
+Two findings from rebuilding the JD corpus (full writeup: "JD corpus
+rebuild" below) that outrank everything else in this document and belong
+at the top, not buried in a subsection:
+
+1. **The 92-term seed taxonomy matches ZERO skills in 20 of 33 real,
+   currently-live job postings** — including postings squarely in the
+   taxonomy's own target fields (a Neuralink electrical-engineering
+   posting naming Altium and KiCad by name; RIVR's Mechanical Engineer
+   posting; Figma's Product Designer posting). Checked directly via
+   `matcher.extract(jd_text).skill_ids`, not inferred from a sample-size
+   drop. This is a coverage failure, not a correlation problem, and any
+   match-mode correlation number is secondary to it — a taxonomy that
+   can't read most of the postings it's supposed to match against can't
+   be fairly judged on how well it correlates with humans on the
+   postings it happens to read.
+2. **Every match-mode correlation number produced before this rebuild was
+   measuring self-agreement, not performance.** The original 34-posting
+   `jds.json` was written with the 92-term taxonomy already in view, so
+   it happens to name exactly the vocabulary the taxonomy recognizes —
+   0 of those 34 postings hit the coverage failure above. That's not a
+   coincidence; it's the benchmark having been built with knowledge of
+   the system under test. This is a contaminated-benchmark finding, the
+   same failure mode that makes published ML results irreproducible, and
+   it was only found by rebuilding the benchmark from a source
+   (companies' own live job-board APIs) with no relationship to the
+   taxonomy at all.
+
+Confirmed prediction: filtered ESCO recovers coverage from 13/33 to
+**32/33** on the identical real-postings set — not a ρ improvement, a
+coverage one, exactly as predicted before running it (see the JD corpus
+rebuild section). That reframes the taxonomy decision from "ESCO wins on
+correlation" (it doesn't, clearly — see below) to **"the seed taxonomy
+cannot process real job postings at all, and ESCO can,"** which is the
+harder, more defensible, and more decision-relevant finding.
+
 ## Cycle close-out: four numbers
 
 **1. Post-fix not-covered ρ: −0.182 (n=28, p=0.355).** Still not
@@ -320,66 +357,117 @@ matched on field *and* level from `evaluation/labels.csv`, fetched
 directly from each company's own public job-board API (Lever
 `api.lever.co/v0/postings`, Greenhouse `boards-api.greenhouse.io`) on
 2026-08-26 — `evaluation/jds_v2.json`, provenance (source URL, company,
-title, fetch date) recorded per entry. Coverage: 27/38 real and
-well-matched, 6/38 real but with a noted level mismatch (the live-posting
-market didn't have a clean fit in the time available — e.g. R32 got a
-senior owner's-rep PM role against an "early-career" label), 5/38
-(R02, R04, R07, R09, R18) fall back to the original field-only JD,
-explicitly flagged via `is_fallback` — no live posting was found for
-those field+level pairs in time. Not silently smoothed over: this is a
-partial, honestly-labeled rebuild, not a claimed-complete one.
+title, fetch date) recorded per entry. **The evaluation set is n=33, not
+n=38**: 5 resumes (R02, R04, R07, R09, R18) have no live posting collected
+(`collected: false`, `text: null`) and are dropped from the set outright
+rather than backfilled with the old field-only JD — backfilling would
+silently mix a taxonomy-friendly-by-construction JD into the same n as
+genuinely independent postings, contaminating exactly the comparison this
+rebuild exists to make. Of the 33: 27 real and well-matched, 6 real but
+with a noted level mismatch (`note_imperfect_match` per entry — e.g. R32
+got a senior owner's-rep PM role against an "early-career" label; the
+live-posting market didn't have a clean fit in the time available).
+Smaller and clean beats larger and mixed.
 
-**Re-ran the exact comparison, seed taxonomy held fixed** (isolates the
-JD corpus as the only changed variable — `scripts/jd_rebuild_comparison.py`):
+### Coverage, not correlation, is the headline (see top of document)
 
-| JD set | mode | n | ρ | p |
-|---|---|---|---|---|
-| OLD (field-only, 34) | skills/JD-match | 38 | 0.278 | 0.091 |
-| NEW (all 38, incl. 5 fallback) | skills/JD-match | **17** | 0.402 | 0.109 |
-| NEW (33 real, level-matched) | skills/JD-match | **13** | 0.519 | 0.069 |
-| OLD (field-only, 34) | relevance | 38 | 0.115 | 0.490 |
-| NEW (33 real, level-matched) | relevance | 33 | 0.215 | 0.229 |
+Checked directly via `matcher.extract(jd_text).skill_ids`, not inferred
+from a sample-size drop:
 
-**Neither of the two hypothesized causes is what actually dominates.**
-The rebuild surfaced a third thing, bigger than both: n collapses from 38
-to 13–17 in skills/JD-match mode, because **20 of the 38 new, real JDs
-match zero seed-taxonomy skills at all** — including postings in fields
-the taxonomy is supposedly built for (RIVR's Mechanical Engineer posting,
-Neuralink's EE posting naming PCB tools like Altium/KiCad, Figma's
-Product Designer posting). `SkillsScorer`'s JD-match mode goes
-uncomputable outright when a JD names no recognized skill (`"JD named no
-recognized taxonomy skills"` — by design, not a bug: see that scorer's
-own uncomputable branch). Checked directly (not inferred from the n drop):
-`matcher.extract(jd_text).skill_ids` is the empty set for those 20 JDs.
+| taxonomy | JDs with ≥1 matched skill (of 33) |
+|---|---|
+| seed (92 terms) | **13/33** (39%) |
+| ESCO, filtered | **32/33** (97%) — recovers 19 of the 20 seed zero-match JDs |
 
-The old field-only `jds.json` didn't have this problem (38/38 computable)
-for a reason that's now visible only in hindsight: those 34 postings were
-themselves written with the 92-term taxonomy already in view, so they
-happen to name exactly the vocabulary the taxonomy recognizes. Real job
-postings, in their own natural language, mostly don't. That's not a
-defect in the new JDs — it's the old JDs' hidden unrealism becoming
-visible for the first time. The whole match-mode evaluation to this point,
-old-JD-based, was measuring "can the scorer detect skills when the JD
-happens to use the taxonomy's own words," not real match-mode performance.
+Seed's 20 zero-match postings include ones squarely in its own target
+fields: Neuralink's EE posting (names Altium and KiCad by name), RIVR's
+Mechanical Engineer posting, Figma's Product Designer posting. This is
+the confirmation of the prediction made before running the comparison:
+*"the expected effect isn't a ρ improvement — it's a coverage
+improvement."* It was. **This reframes the taxonomy decision: not "ESCO
+wins on ρ" (see below — it doesn't, on either taxonomy's own covered
+subsample) but "the seed taxonomy cannot process real job postings at
+all, and ESCO can."** That's the harder, more defensible finding, and it
+settles the mode-specific recommendation the earlier ESCO section
+deferred: ESCO for match-mode, full stop, on coverage grounds alone,
+independent of what ρ does next.
 
-On the shrunken subsample where a score *could* be computed, ρ does move
-in the predicted direction and further than expected (0.278 → 0.519,
-n=13, real JDs only) — consistent with "the old JDs were part of the
-problem" — but at n=13, with real selection bias (only JDs the taxonomy
-happened to cover survive), this is suggestive, not a settled answer to
-the original question. The coverage collapse is the finding that actually
-needs to be dealt with before the correlation number means anything:
-**a taxonomy that returns zero skills for the majority of real postings
-in its own target fields can't be fairly judged on match-mode
-correlation until that's fixed.**
+### Resume-side coverage check (same 92 terms, no-JD skills mode)
 
-**This also means the ESCO match-mode numbers reported above (seed
-ρ=0.294 → filtered-ESCO ρ=0.477) are themselves measured against the old,
-taxonomy-friendly field-only JDs and need re-validation against
-`jds_v2.json` before being trusted as ESCO's real match-mode
-performance** — plausible in ESCO's favor given its ~13.9k-term coverage
-should suffer far less from this exact failure mode, but not yet
-measured. Re-running `compare_taxonomies.py`'s skills/JD-match and
-relevance rows against the rebuilt JD corpus, and closing the remaining
-5 fallback JDs, are the concrete next steps — before any live-default
-change to either the taxonomy or the JD-match conditioning logic.
+If 20/33 real JDs match nothing, the same taxonomy applied to *resumes*
+— the population `ρ=0.653` (no-JD skills mode) was measured entirely
+against — could plausibly have the same blind spot. Checked directly,
+not assumed clean by association:
+
+33/39 resumes match at least one seed-taxonomy skill; 6 match zero —
+R04, R15, R25, R27, R28 (already a separate, documented
+extraction-readability case), R32. Their human "skills" scores: R04=12,
+R15=7, R25=9, R27=6, R32=8 (all out of 15) — not uniformly low. **R04 in
+particular is a real miss: a resume a human scored 12/15 gets a flat
+machine 0**, because `SkillsScorer`'s no-JD "count" mode never goes
+uncomputable (`min(0/12, 1.0)*15 = 0` is still a valid score, not `None`)
+— so, unlike the JD-side collapse, this doesn't shrink `ρ=0.653`'s n or
+introduce selection bias. It IS a real, quantifiable blind spot baked
+directly into that number: roughly 15% of resumes get scored purely on
+the strength of whether the taxonomy happens to name their skills, with
+at least one clear case (R04) where it doesn't and the human clearly
+disagreed. `ρ=0.653` is not invalidated by this the way skills/JD-match
+was — no hidden exclusion — but it is not as clean as reported without
+this caveat attached, and the fix is the same one already underway:
+taxonomy coverage.
+
+### Correlation, on each taxonomy's own covered subsample — selection bias is real, read these numbers accordingly
+
+**Every ρ below is computed only over the JDs that produced a score at
+all** (`SkillsScorer`'s JD-match mode is uncomputable, not zero, when the
+JD names no recognized skill) — for seed that's the *easiest* 13 of 33
+real postings, the ones whose language happens to overlap the 92-term
+list; for ESCO it's 32 of 33, close to the full, representative set.
+**These are not comparable samples, and neither ρ should be read as a
+neutral estimate of match-mode performance — seed's is optimistic
+(cherry-picked easy cases), ESCO's is closer to real but still small.**
+
+| taxonomy | JD set | mode | n | ρ | p |
+|---|---|---|---|---|---|
+| seed | OLD field-only (contaminated) | skills/JD-match | 39 | 0.294 | 0.070 |
+| seed | NEW real (13/33 covered) | skills/JD-match | 13 | 0.519 | 0.069 |
+| ESCO, filtered | OLD field-only (contaminated) | skills/JD-match | 38 | 0.477 | 0.002 |
+| ESCO, filtered | NEW real (32/33 covered) | skills/JD-match | 32 | 0.185 | 0.312 |
+| seed | OLD field-only | relevance | 39 | 0.089 | 0.592 |
+| seed | NEW real (33) | relevance | 33 | 0.215 | 0.229 |
+| ESCO, filtered | OLD field-only | relevance | 39 | 0.232 | 0.155 |
+| ESCO, filtered | NEW real (33) | relevance | 33 | **0.387** | **0.026** |
+
+Two things worth naming here, not just the coverage headline:
+- **ESCO's skills/JD-match ρ on its own near-complete covered set (0.185,
+  n=32) is neither better nor worse than seed's on its cherry-picked
+  n=13 (0.519) in any meaningful sense — they're not the same
+  measurement.** Seed's number describes 13 easy cases; ESCO's describes
+  almost the whole real distribution, including the hard ones seed never
+  even attempted. A lower ρ on a harder, more complete sample is not a
+  regression.
+- **ESCO's relevance ρ against the real JD corpus (0.387, p=0.026) is the
+  one genuinely significant number in this entire match-mode
+  investigation, old or new JDs, either taxonomy.** Worth flagging as a
+  real, positive, replicated-once signal — not over-claiming from a
+  single significant result at this sample size, but it's the strongest
+  data point for adopting ESCO on the relevance dimension specifically,
+  on top of the coverage case already made above.
+
+Every ρ number in this section carries `n≤33` and the selection-bias
+caveat above; treat all of them, including the "significant" ones, as
+directional, not conclusive, until re-measured on a larger corpus.
+
+### What's still open
+
+- **R27 (Urban Political Economy) remains zero-match even under ESCO**
+  — its `note_imperfect_match` already flags the underlying posting
+  (Civitech's general civic researcher role) as a weak field fit; this
+  is likely that mismatch surfacing again, not a new taxonomy gap.
+- The 5 uncollected resumes (R02, R04, R07, R09, R18) stay uncollected;
+  deliberately not chased further — see the top-level decision to keep
+  the eval set clean at n=33 rather than backfilled and mixed.
+- No live-default change to either the taxonomy or the JD-match
+  conditioning logic has been made from any of this. Coverage is now the
+  documented, decision-relevant reason to prefer ESCO for match-mode;
+  whether and how to wire that in is a separate product decision.

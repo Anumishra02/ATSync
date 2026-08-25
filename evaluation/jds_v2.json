@@ -1,5 +1,5 @@
 {
-  "_provenance_note": "Phase 1 JD rebuild: one real, currently-live job posting per resume, matched on field AND level (evaluation/labels.csv), fetched from each company's own public job-board API (Lever api.lever.co/v0/postings, Greenhouse boards-api.greenhouse.io) on 2026-08-26. Each entry records source_url, company, title, and fetch_date for provenance. 33/38 resumes have a genuinely new, level-matched posting; 5 (R02, R04, R07, R09, R18) could not be matched to a live posting in the time available and fall back to the original field-only JD from jds.json, explicitly flagged via is_fallback. See evaluation/backlog.md's JD rebuild section for the full writeup, including known imperfect-level-match cases.",
+  "_provenance_note": "Phase 1 JD rebuild. Headline finding, not a footnote: of the 33 real, currently-live postings collected here (fetched directly from each company's own public job-board API -- Lever api.lever.co/v0/postings, Greenhouse boards-api.greenhouse.io -- on 2026-08-26, one per resume, matched on field AND level from evaluation/labels.csv), the 92-term seed taxonomy matches ZERO skills in 20 of them -- including postings squarely in the taxonomy's own target fields (a Neuralink EE posting naming Altium and KiCad; RIVR's Mechanical Engineer posting; Figma's Product Designer posting). That is a coverage failure, not a correlation problem, and it is the dominant result of this rebuild -- see evaluation/backlog.md's opening section. A second, independent finding: the ORIGINAL jds.json (34 field-only postings, no level match) was written with the 92-term taxonomy already in view, so it happens to name exactly the vocabulary the taxonomy recognizes -- every match-mode number measured against it to date was measuring self-agreement with a benchmark contaminated by the thing under test, not real-world performance. Discovered only by rebuilding the benchmark from independent sources. 27/33 collected postings are well field+level-matched; 6/33 are real but have a noted level mismatch (see each entry's note_imperfect_match). 5 resumes (R02, R04, R07, R09, R18) have NO live posting collected -- collected: false, text: null -- and are deliberately excluded from the evaluation set rather than backfilled with the old field-only JD, which would silently mix a taxonomy-friendly-by-construction JD into the same n as genuinely independent postings. n=33 is the number to compute correlations against, not n=38.",
   "R01": {
     "field": "Art History / Arts Administration",
     "level": "Student (undergrad)",
@@ -48,12 +48,12 @@
   "R09": {
     "field": "Accounting",
     "level": "Student (undergrad)",
-    "is_fallback": true,
-    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for an undergraduate accounting internship within the time available -- several candidates (Ripple, Threat Tec, NextDecade) closed or returned mismatched seniority between search and fetch.",
+    "collected": false,
+    "reason": "No live, level-matched Lever/Greenhouse posting found within the time available. Deliberately dropped from the evaluation set rather than backfilled with the old field-only JD -- mixing a taxonomy-friendly-by-construction JD into the same n as genuinely independent real postings would contaminate the comparison this rebuild exists to make.",
     "title": null,
     "company": null,
     "source_url": null,
-    "fetch_date": "2026-08-26",
+    "fetch_date": null,
     "text": null
   },
   "R11": {
@@ -299,46 +299,46 @@
   "R02": {
     "field": "Education / Youth Development",
     "level": "Student (undergrad)",
-    "is_fallback": true,
-    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "collected": false,
+    "reason": "No live, level-matched Lever/Greenhouse posting found within the time available. Deliberately dropped from the evaluation set rather than backfilled with the old field-only JD -- mixing a taxonomy-friendly-by-construction JD into the same n as genuinely independent real postings would contaminate the comparison this rebuild exists to make.",
     "title": null,
     "company": null,
     "source_url": null,
-    "fetch_date": "2026-08-26",
-    "text": "Youth Program Coordinator\n\nRequirements\n- Experience designing and facilitating youth development or after-school programming\n- Strong classroom management and mentoring skills\n- Experience with curriculum development and lesson planning\n- Excellent written communication skills for parent and stakeholder updates\n- Ability to track program outcomes and report on student progress\n- Background check and experience working with children required\n\nNice to Have\n- Bilingual or multilingual communication skills\n- Experience with nonprofit or community organization partnerships\n- Familiarity with social-emotional learning frameworks"
+    "fetch_date": null,
+    "text": null
   },
   "R04": {
     "field": "Marketing",
     "level": "Student (undergrad)",
-    "is_fallback": true,
-    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "collected": false,
+    "reason": "No live, level-matched Lever/Greenhouse posting found within the time available. Deliberately dropped from the evaluation set rather than backfilled with the old field-only JD -- mixing a taxonomy-friendly-by-construction JD into the same n as genuinely independent real postings would contaminate the comparison this rebuild exists to make.",
     "title": null,
     "company": null,
     "source_url": null,
-    "fetch_date": "2026-08-26",
-    "text": "Marketing Specialist\n\nRequirements\n- Experience developing and executing marketing campaigns across digital channels\n- Proficiency with Google Analytics (GA4) for campaign measurement\n- Strong understanding of SEO and content marketing best practices\n- Experience with social media management and content calendars\n- Excellent written communication skills for copywriting and messaging\n- Experience with email marketing platforms and A/B testing\n\nNice to Have\n- Experience with paid advertising (Google Ads, Meta Ads)\n- Familiarity with Power BI or Tableau for marketing dashboards\n- Experience with brand strategy or market research"
+    "fetch_date": null,
+    "text": null
   },
   "R07": {
     "field": "History / Non-profit",
     "level": "Student (undergrad)",
-    "is_fallback": true,
-    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "collected": false,
+    "reason": "No live, level-matched Lever/Greenhouse posting found within the time available. Deliberately dropped from the evaluation set rather than backfilled with the old field-only JD -- mixing a taxonomy-friendly-by-construction JD into the same n as genuinely independent real postings would contaminate the comparison this rebuild exists to make.",
     "title": null,
     "company": null,
     "source_url": null,
-    "fetch_date": "2026-08-26",
-    "text": "Non-profit Program Associate\n\nRequirements\n- Bachelor's degree in History, Humanities, or related field\n- Experience with nonprofit program coordination or community outreach\n- Strong research and written communication skills\n- Experience with fundraising, grant writing, or donor relations\n- Ability to manage volunteers and coordinate events\n- Proficiency with Excel for budget tracking and reporting\n\nNice to Have\n- Experience with archival research or historical documentation\n- Familiarity with CRM or donor management software\n- Public speaking or facilitation experience"
+    "fetch_date": null,
+    "text": null
   },
   "R18": {
     "field": "International Business",
     "level": "Student (early undergrad)",
-    "is_fallback": true,
-    "fallback_reason": "No live, level-matched Lever/Greenhouse posting found for this field+level within the time available.",
+    "collected": false,
+    "reason": "No live, level-matched Lever/Greenhouse posting found within the time available. Deliberately dropped from the evaluation set rather than backfilled with the old field-only JD -- mixing a taxonomy-friendly-by-construction JD into the same n as genuinely independent real postings would contaminate the comparison this rebuild exists to make.",
     "title": null,
     "company": null,
     "source_url": null,
-    "fetch_date": "2026-08-26",
-    "text": "International Business Development Associate\n\nRequirements\n- Bachelor's degree in International Business, Economics, or related field\n- Experience with market research and competitive analysis\n- Strong cross-cultural communication skills, additional languages a plus\n- Experience with Excel for financial and market analysis\n- Understanding of global trade, supply chain, or international finance\n- Ability to manage relationships with international stakeholders\n\nNice to Have\n- Study abroad or international internship experience\n- Familiarity with Power BI or Tableau for market dashboards\n- Experience with export/import compliance"
+    "fetch_date": null,
+    "text": null
   },
   "R10": {
     "field": "Marketing",
