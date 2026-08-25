@@ -51,7 +51,17 @@ import ftfy
 # emits for second-level bullets. Mis-decoded (mojibake) bullets are only
 # matched after normalize_document_text has already run -- see the module
 # docstring.
-_BULLET = re.compile(r"^\s*(?:[•‣▪●◦⁃∙*\-–—]|o(?=\s)|\d{1,2}[.)])\s+")
+#
+# Public (no leading underscore): anything outside this module that needs
+# to recognize "is this line a bullet" (e.g. a test injecting a defect
+# into bullet lines specifically) should match against this exact pattern,
+# not a hand-copied approximation of it -- a narrower ad-hoc bullet regex
+# elsewhere silently missed real bullet glyphs this one already handles
+# (confirmed: a defect-injection test using its own "[bullet-dash-star]"
+# regex found zero bullets on a resume using "●" bullets, which this
+# pattern already recognized).
+BULLET = re.compile(r"^\s*(?:[•‣▪●◦⁃∙*\-–—]|o(?=\s)|\d{1,2}[.)])\s+")
+_BULLET = BULLET  # internal alias, so every existing in-module reference stays unchanged
 _SECTION_VOCAB = {
     "experience", "work experience", "professional experience", "employment",
     "education", "academics", "qualifications",

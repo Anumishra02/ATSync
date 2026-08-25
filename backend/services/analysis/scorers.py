@@ -1,11 +1,10 @@
-"""The six scoring dimensions, each wrapping existing (tested) logic.
+"""The six scoring dimensions.
 
-Per the evaluation cycle's backlog (evaluation/backlog.md), this
-increment deliberately does NOT change the underlying logic of Structure,
-Writing, or Achievements -- they're wrapped as-is. Two dimensions ARE
-built differently than the live route currently computes them, because
-the backlog specifically identified why the old computation carries no
-signal:
+Structure and Achievements wrap existing (tested) logic unchanged -- see
+evaluation/backlog.md, which found no reason to touch their internals.
+Three dimensions ARE built differently than the live route currently
+computes them, each because the backlog identified why the old
+computation carries no signal:
 
   Relevance   Uses score_resume (weighted by JD emphasis, evidence-linked)
               instead of legacy_ats_score's keyword_score. The backlog's
@@ -14,6 +13,9 @@ signal:
               p=0.71) -- "no concept of what a human means by relevant."
               score_resume already exists and is tested; it just wasn't
               wired into anything live yet.
+  Writing     Rewritten from pure word-repetition (see WritingScorer's
+              own docstring) after a defect-injection test proved that
+              proxy blind to passive voice and filler entirely.
   Experience  New. No prior implementation to preserve -- the backlog's
               single largest gap (20/100 rubric points, unmeasured on
               every one of the 39 evaluated resumes). Calibrated against
@@ -35,9 +37,12 @@ human labels already collected.
 
 from __future__ import annotations
 
+import re
 from typing import Protocol
 
-from services.analyzer import check_quantification, check_repetition
+from wordfreq import zipf_frequency
+
+from services.analyzer import check_quantification
 from services.matching.chunking import ChunkKind, chunk_job_description, chunk_resume
 from services.scoring import check_sections, score_resume
 from services.skills.matcher import SkillMatcher
@@ -74,16 +79,93 @@ class StructureScorer:
         )
 
 
-class WritingScorer:
-    """Word-repetition proxy -- see analyzer.check_repetition.
+_FILLER_PHRASES = (
+    "basically", "sort of", "kind of", "helped with", "worked on",
+    "responsible for", "was involved in", "in order to", "literally",
+    "various things", "a lot of", "things related to", "helping to",
+    "in charge of", "duties included",
+)
+# Passive voice: "was/were/is/are/been/being" + a past-participle-shaped
+# word ("built", "written", "given", ...). Deliberately crude (a shape
+# heuristic, not real POS tagging) -- consistent with this project's other
+# regex-based checks (see check_quantification's docstring on why a cheap,
+# inspectable heuristic beats an opaque one here), and good enough to
+# distinguish "Built a service" from "A service was built by me".
+_PASSIVE_PATTERN = re.compile(r"\b(?:was|were|is|are|been|being)\s+\w+(?:ed|en)\b", re.IGNORECASE)
 
-    Deliberately NOT folding in check_grammar (Gemini-dependent) in this
-    pass -- see the module docstring on why this dimension is wrapped
-    as-is rather than fixed. check_repetition's own known bug (flags
-    legitimate technical-term repetition, e.g. "Python" appearing 4+ times
-    in a technical resume, as if it were poor word choice -- see
-    backlog.md item 4) is inherited here on purpose, not fixed in this
-    pass.
+# Contact/header lines: an email, a URL, or a line naming 2+ of the
+# standard profile-link domains. Excluded from writing analysis entirely
+# (not just from the repetition count) -- passive-voice/filler detection
+# make no sense against a contact line either, and it's simpler to filter
+# once than to special-case three different checks against the same line.
+_CONTACT_LINE_PATTERN = re.compile(
+    r"@|https?://|linkedin\.com|github\.com|\.(?:com|io|dev|me|net)\b", re.IGNORECASE
+)
+
+# Same stoplist check_repetition already used, so this isn't a behavior
+# change on the non-skill-aware part of the fix. Kept as a cheap fallback
+# alongside the zipf check below, same relationship as COMMON_WORDS to
+# wordfreq in services/skills/taxonomy.py.
+_WRITING_STOPWORDS = frozenset({
+    "experience", "project", "using", "based", "working", "developed",
+    "built", "implemented", "managed", "created", "designed",
+})
+# A word this common in general English naturally recurs 4+ times in any
+# resume of ordinary length ("which", "different", "department",
+# "students", "system" all score 5.0+) -- that's a property of the English
+# language, not a stylistic defect. Repeating a genuinely distinctive word
+# ("leveraged", "spearheaded", or a technical term outside the taxonomy
+# like "opencv", zipf 1.62) is a real signal; repeating "which" is not.
+# Threshold picked to clear every common-word false positive the
+# defect-injection test surfaced while still catching genuinely rare-word
+# repetition -- same mechanism as the skill matcher's fuzzy-tier wordfreq
+# gate (services/skills/matcher.py), reused here for an analogous problem.
+_WRITING_COMMON_WORD_ZIPF_THRESHOLD = 4.0
+
+
+class WritingScorer:
+    """Repetition (skill- and common-word-aware) + passive voice +
+    filler-phrase density, scoped to bullet content.
+
+    Rewritten from a pure word-repetition proxy after the defect-injection
+    test (test_writing_discrimination.py) proved that proxy blind to
+    passive voice and filler entirely -- three synthetic resumes with
+    heavily passive or filler-laden bullets scored identically to the
+    clean baseline (15.0/15.0, all three), which is exactly the "carries
+    no reliable signal" finding backlog.md's regression already flagged
+    (r^2=0.016, p=0.73). Per that item's own instruction: the proxy
+    needed rewriting, not recalibrating.
+
+    Also fixes backlog.md item 4's named bug, and two broader versions of
+    it the defect-injection test surfaced empirically, not by inspection:
+    repetition no longer penalizes a word that's part of a skill the
+    matcher recognized (e.g. "Python" appearing 4+ times in a genuinely
+    Python-heavy resume), a word that's simply common in general English
+    (the penalty was saturating on words like "which"/"department" that
+    have nothing to do with writing quality -- injecting MORE repetition
+    into a resume that already had many such words was invisible until
+    this was fixed), or a word that's the résumé owner's own name/handle
+    repeating across contact links ("github.com/harshibar",
+    "linkedin.com/in/harshibar") -- also not a writing-quality signal.
+
+    Still an honest limitation, not resolved by any of the above: measured
+    against the 39 human labels after every fix above, correlation is
+    essentially zero (rho=-0.04, p=0.81, n=39) -- better than the -0.19
+    a single missing fix (contact-line exclusion) produced, but nowhere
+    near evidence the proxy tracks human writing judgment. One real,
+    concrete case why: R11 (human writing=7/15, middling) scores a
+    perfect 15.0/15.0 here -- zero repeated words, zero passive lines,
+    zero filler lines detected, and yet a human found something worth
+    marking down. Passive voice, filler phrases, and word repetition are
+    real writing problems, but they are evidently not the ones this rater
+    weighted, or not the form they take in this corpus. The
+    defect-injection suite proves this proxy responds to the three
+    specific things it was built to detect (40/40, real degradations, not
+    assumed) -- it does not prove those three things are what "good
+    writing" means to a human reader. Closing that gap likely needs a
+    genuinely different kind of signal (grammar/clarity assessment,
+    plausibly the deferred check_grammar/Gemini path, or real POS-based
+    analysis), not a fourth regex heuristic bolted onto these three.
     """
 
     name = "writing"
@@ -91,14 +173,71 @@ class WritingScorer:
     requires_jd = False
 
     def score(self, resume_text: str, jd_text: str | None, matcher: SkillMatcher) -> DimensionResult:
-        result = check_repetition(resume_text)
-        pct = result["score"] / 100.0
+        # Scored over any scorable content (bullets AND prose, excluding
+        # headings/boilerplate) -- NOT bullets only. A prose-paragraph
+        # resume can exhibit passive voice, filler, and repetition just as
+        # validly as a bulleted one; restricting to bullets would make
+        # Writing uncomputable on exactly the resumes Achievements already
+        # is (see AchievementsScorer), unnecessarily stacking two
+        # uncomputable dimensions where only one is actually warranted.
+        # Contact/header lines ("github.com/harshibar | linkedin.com/in/harshibar")
+        # aren't prose and shouldn't be judged as writing at all -- found via
+        # the defect-injection test's real-corpus correlation check: a
+        # résumé owner's own name or handle repeating across contact links
+        # was flagging as "repetition," penalizing writing quality for
+        # something with nothing to do with how the résumé is written.
+        lines = [
+            c.text for c in chunk_resume(resume_text)
+            if c.is_scorable and not _CONTACT_LINE_PATTERN.search(c.text)
+        ]
+        if not lines:
+            return DimensionResult(
+                dimension=self.name, score=None, max_points=self.max_points, status="uncomputable",
+                detail={"reason": "no scorable content (bullets or prose) to assess"},
+            )
+
+        skill_words = {
+            w.lower()
+            for m in matcher.extract(resume_text).matches
+            for w in m.surface.split()
+        }
+        words = re.findall(r"\b[a-zA-Z]{5,}\b", " ".join(lines).lower())
+        freq: dict[str, int] = {}
+        for w in words:
+            freq[w] = freq.get(w, 0) + 1
+        repeated = {
+            w: c for w, c in freq.items()
+            if c >= 4
+            and w not in _WRITING_STOPWORDS
+            and w not in skill_words
+            and zipf_frequency(w, "en") < _WRITING_COMMON_WORD_ZIPF_THRESHOLD
+        }
+
+        passive_lines = sum(1 for line in lines if _PASSIVE_PATTERN.search(line))
+        passive_rate = passive_lines / len(lines)
+
+        filler_lines = sum(
+            1 for line in lines if any(phrase in line.lower() for phrase in _FILLER_PHRASES)
+        )
+        filler_rate = filler_lines / len(lines)
+
+        raw = 100.0
+        raw -= min(len(repeated), 5) * 15  # same per-word penalty check_repetition used
+        raw -= passive_rate * 40
+        raw -= filler_rate * 40
+        raw = max(0.0, raw)
+
+        pct = raw / 100.0
         return DimensionResult(
             dimension=self.name,
             score=round(pct * self.max_points, 1),
             max_points=self.max_points,
             status="scored",
-            detail={"repeated_words": result["repeated_words"]},
+            detail={
+                "repeated_words": sorted(repeated),
+                "passive_line_rate": round(passive_rate, 2),
+                "filler_line_rate": round(filler_rate, 2),
+            },
         )
 
 
