@@ -27,6 +27,13 @@ test_corpus/*
 !backend/tests/fixtures/pdfs/**
 !test_corpus/README.md
 
+# ESCO skills taxonomy (Phase 1 item 2): ~9.5MB external dataset, not repo
+# content -- see backend/data/README.md for the fetch command. The
+# 92-term seed taxonomy (skills_seed.json) stays committed; it's the
+# bootstrap set tests and CI depend on.
+backend/data/skills_en.csv
+backend/data/*.zip
+
 # evaluation/step0/Resumes/: 39-resume calibration set, all template/
 # placeholder identities verified individually (e.g. "(xxx) xxx-xxxx",
 # "hello@reallygreatsite.com" -- Canva's own template placeholder domain,

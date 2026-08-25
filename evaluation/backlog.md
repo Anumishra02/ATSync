@@ -198,3 +198,109 @@ to Achievements.
   correctly-recognized skill matches on 15/39 corpus resumes (a "Computer
   skills: Excel, SQL" or "Languages: Spanish" line is exactly where people
   legitimately declare skills). Left unchanged.
+
+## ESCO taxonomy swap (Phase 1 item 2)
+
+Brief, before doing anything: keep the loader pluggable and produce the
+before/after comparison as the actual deliverable, not the swap itself;
+confirm the JD corpus is independent of ESCO before trusting any
+match-mode number. Both conditions confirmed before running anything:
+`Taxonomy.from_esco_csv` already existed behind the same interface as
+`from_seed_json` (no new plumbing needed); `evaluation/jds.json` (the
+34 field-matched JDs used below) was committed in an earlier session,
+before `backend/data/skills_en.csv` existed anywhere in this repository
+or its working tree — verified via `git log --diff-filter=A --
+evaluation/jds.json` — so the JD text cannot have been drawn from ESCO's
+own skill descriptions.
+
+**Downloaded the real thing, not a stand-in.** ESCO v1.1.1 classification
+(English), fetched from the European Commission's official distribution
+(see `backend/data/README.md`): 13,896 skills, 98,067 surface forms — the
+"~13.9k" figure Phase 1's brief anticipated, confirmed, not assumed.
+
+**First measurement: a naive swap is a regression, not an upgrade.**
+Ran `SkillsScorer` (no-JD count mode) against the human "skills" label on
+all 39 corpus resumes, seed taxonomy vs. raw ESCO:
+
+| taxonomy | n | slope | intercept | r² | ρ | p |
+|---|---|---|---|---|---|---|
+| seed (92 terms) | 39 | 0.954 | −4.94 | 0.438 | **0.653** | <0.001 |
+| ESCO, raw | 39 | 0.135 | 12.88 | 0.056 | 0.212 | 0.196 |
+
+Worse on every axis, and on the tech-field subset (n=7 — Data Science,
+SWE, Full-Stack, etc.) it's not just worse, it's *flat*: every tech resume
+saturates the scorer's max, ρ undefined (constant output). Diagnosed, not
+guessed: ESCO's much larger alias set includes many single generic
+English words loosely attached to a far narrower concept —
+`"engineering"` aliases to *packaging engineering*, `"processes"` to
+*perform ground-handling maintenance procedures*, `"measurement"` to
+*metrology* — plus real but out-of-domain entries (`"dancing"`,
+`"soccer"`) that are genuine ESCO skills, just noise for a resume's
+professional-skill score. Concrete case: R26 (Materials Science ->
+Consulting, human skills score = 3/15, the *lowest* in the corpus)
+matched `engineering`, `processes`, `measurement`, `interaction`,
+`dancing`, `soccer` as "skills" under raw ESCO — none of them a real
+signal about this résumé.
+
+None of this is the fuzzy-tier typo problem `matcher.py`'s existing
+`wordfreq` gate already guards against — every one of these lands as
+`MatchTier.EXACT`, because it's baked into the taxonomy's index as a
+literal surface form. The gate that exists protects against *near-misses*
+on real skill names; it was never asked to protect against the skill
+names themselves being too generic, because the 92-term seed was small
+enough that every alias was hand-picked and this never came up.
+
+**Fix: `Taxonomy.from_esco_csv(..., filter_generic_aliases=True)`** (now
+the default) drops a single-word surface form when it's both long (≥5
+characters) and common (zipf ≥ 4.0). The length gate is load-bearing, not
+decoration — a length-blind frequency cutoff nearly reintroduced, in a
+worse form, the exact "`go` the language vs. the verb" ambiguity this
+project already solved once: `"r"` (zipf 5.35) and `"go"` (zipf 6.03) are
+both real, short language names that a naive filter would have dropped
+from the taxonomy *entirely*, not merely fuzzy-gated. Verified `r`,
+`java`, `sql`, `python` all still resolve correctly after filtering (see
+`tests/test_taxonomy_esco.py`).
+
+Re-measured:
+
+| taxonomy | mode | n | ρ | p |
+|---|---|---|---|---|
+| seed | skills, no-JD | 39 | 0.653 | <0.001 |
+| ESCO, filtered | skills, no-JD | 39 | 0.496 | 0.001 |
+| seed | skills, JD-match | 39 | 0.294 | 0.070 |
+| ESCO, filtered | skills, JD-match | 38 | **0.477** | **0.002** |
+| seed | relevance | 39 | 0.089 | 0.592 |
+| ESCO, filtered | relevance | 39 | 0.232 | 0.155 |
+
+Two different stories, not one:
+- **JD-match mode — the mode that matters most in production — genuinely
+  improves**, and clears significance where the seed taxonomy doesn't
+  (ρ 0.294→0.477, p 0.070→0.002). Relevance moves the same direction,
+  though not far enough to clear significance at n=39.
+- **No-JD count mode does not clearly improve overall**, and on the
+  tech-field subset (n=7) it stays essentially flat (ρ≈0.00) regardless
+  of `_SKILLS_NO_JD_TARGET_COUNT` — checked across target=8 through 30,
+  not assumed fixed by one value: no target recovers a real ranking,
+  because the underlying per-resume ESCO counts just don't order that
+  small subsample the way the human label does (R24, the *lowest*-scored
+  tech resume, has the *second-highest* raw count). n=7 is too small to
+  tell "genuinely noisy at this scale" apart from "a real defect" — this
+  needs more tech-field labels before concluding either way, not more
+  target-tuning on the same seven data points.
+
+**Decision, not yet made here:** filtered ESCO is a measured, significant
+win for match-mode skill scoring and a wash-to-regression for the no-JD
+count mode on tech resumes specifically. Recommending the swap for
+match-mode while keeping the seed taxonomy as the no-JD default (per
+scorer, or per mode) is the option this data actually supports — not a
+blanket swap either direction. `filter_generic_aliases=True` is the
+default either way; anyone loading ESCO from here forward gets the
+filtered version unless they deliberately opt out (see
+`backend/data/README.md`). Not wired into the live route's default
+taxonomy as part of this item — that's a product decision on top of a
+measurement, not a continuation of it.
+
+See `backend/scripts/compare_taxonomies.py` for the full runnable
+comparison (seed / raw ESCO / filtered ESCO, three-way, on-demand) and
+`backend/services/skills/taxonomy.py`'s `from_esco_csv` docstring for the
+filter's own reasoning inline with the code it changes.
