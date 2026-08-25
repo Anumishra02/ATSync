@@ -16,10 +16,12 @@ computation carries no signal:
   Writing     Rewritten from pure word-repetition (see WritingScorer's
               own docstring) after a defect-injection test proved that
               proxy blind to passive voice and filler entirely.
-  Experience  New. No prior implementation to preserve -- the backlog's
-              single largest gap (20/100 rubric points, unmeasured on
-              every one of the 39 evaluated resumes). Calibrated against
-              that same 39-resume corpus (see the module-level constants).
+  Experience  Structured extraction against the rubric's own mechanical
+              definition (org, title, city/state, dates per entry, plus
+              reverse-chronological order) -- see experience.py and
+              ExperienceScorer's docstring. Replaces a first-pass
+              bullet-volume placeholder that existed only because no
+              rubric-shaped implementation had been built yet.
 
 Skills keeps legacy_ats_score's skill_score-style computation (flat
 match-rate, not emphasis-weighted) specifically so it stays a different
@@ -43,6 +45,7 @@ from typing import Protocol
 from wordfreq import zipf_frequency
 
 from services.analyzer import check_quantification
+from services.analysis.experience import extract_all_experience_entries
 from services.matching.chunking import ChunkKind, chunk_job_description, chunk_resume
 from services.scoring import check_sections, score_resume
 from services.skills.matcher import SkillMatcher
@@ -423,38 +426,100 @@ class RelevanceScorer:
         )
 
 
-# Calibrated against the 39-resume evaluation corpus, using "experience" as
-# a case-insensitive SUBSTRING of the chunker's raw section label, not an
-# exact match -- real résumés use "Work Experience", "Leadership
-# Experience", "Marketing Experience", "Accounting Experience", none of
-# which equal the literal string "experience". An exact-match version of
-# this scorer found zero experience content on 33 of the 39 resumes; the
-# substring version found content on 38/39 (the one miss, R28, is a real
-# PDF font-encoding failure upstream in extraction, not a scorer bug --
-# its section headings extract as "ane oe" / "j d").
-#
-# Bullets, not prose lines, are the primary signal: résumés the human rater
-# scored >=16/20 clustered at 7-17 experience bullets; most résumés scored
-# <=9/20 had ZERO experience bullets (prose-only role descriptions --
-# "Company, Title, Dates" with no elaboration of what was actually done).
-# 10 sits near the median of the strong cluster. Prose-line count (a rough
-# proxy for how many distinct roles are described) contributes a smaller
-# secondary weight.
-_EXPERIENCE_TARGET_BULLETS = 10
-_EXPERIENCE_TARGET_ENTRIES = 3
-_EXPERIENCE_BULLET_WEIGHT = 0.75
+# Section membership uses "experience" as a case-insensitive SUBSTRING of
+# the chunker's raw section label, not an exact match -- real résumés use
+# "Work Experience", "Leadership Experience", "Marketing Experience",
+# "Accounting Experience", none of which equal the literal string
+# "experience". An exact-match version of this scorer found zero
+# experience content on 33 of the 39 resumes; the substring version finds
+# content on 38/39 (the one miss, R28, is a real PDF extraction failure
+# upstream -- its whole document collapses under one garbled heading,
+# "ane oe" -- not a scorer bug; see experience.py's module docstring).
+_EXPERIENCE_ORDER_WEIGHT = 0.2  # of max_points; the rest is per-entry completeness
 
 
 class ExperienceScorer:
-    """Depth of the experience section: bullet count (primary) and
-    distinct-entry count (secondary), both scoped to sections whose raw
-    heading contains "experience".
+    """Org name, job title, city/state, and dates, checked per role entry,
+    plus a separate reverse-chronological order check across entries --
+    the rubric's own mechanical definition of this dimension, not a
+    semantic judgment of the experience's quality (that's Achievements and
+    Relevance). See services/analysis/experience.py for the extraction
+    itself; this class only turns its output into points.
 
-    New dimension -- no prior implementation existed. See backlog.md:
-    "the only backlog item that's a missing capability rather than a bug."
-    This is a first, real, calibrated pass, not a claim of completeness --
-    it does not yet look at role ordering, date gaps, or seniority
-    (deferred; see the framing-gap discussion's Phase C).
+    Phase 1 item 1. Replaces a first-pass placeholder that scored bullet
+    volume (see this class's git history) because no rubric-shaped
+    implementation existed yet -- that placeholder never claimed to
+    measure the rubric's actual definition, just resume depth as a rough
+    stand-in for it.
+
+    Scoring, built deliberately as "points per satisfied criterion" (not
+    "average quality across entries capped below 100%") so a genuinely
+    complete resume can reach 20/20 -- the same ceiling mistake Phase 1
+    item 3 found and fixed in AchievementsScorer is designed out from the
+    start here:
+      - 80% of max_points: mean, across every real entry, of how many of
+        {org, title, location, dates} that entry has. A resume where every
+        entry has all four naturally hits 1.0, no matter how many entries
+        there are.
+      - 20% of max_points: the order check (see
+        check_reverse_chronological_order). 1.0 when there's no detected
+        violation -- including when there's no comparable pair at all
+        (nothing to contradict), so a single-entry resume or one whose
+        dates are all unparseable isn't penalized twice for a gap the
+        completeness score already counts.
+
+    Uncomputable (not a confident 0) when zero real entries parse from any
+    experience-labeled section -- R28 in the eval corpus exercises this:
+    its whole document extracts under one garbled heading with no
+    "experience" substring anywhere, so there's nothing here to grade.
+
+    Known, honest limitations, not silently absorbed:
+      - Title detection is keyword-based only
+        (services/analysis/experience.py's _TITLE_KEYWORDS) and will miss
+        an uncommon title outside that list. Measured on the 39-resume
+        corpus: org 82.7%, title 69.1%, location 59.3%, dates 84.6% of
+        entries detected.
+      - A resume section that lists honor-society/professional-affiliation
+        memberships under an experience-labeled heading without its own
+        detected sub-heading (a real corpus case, R05: "PROFESSIONAL
+        AFFILIATIONS AND INVOLVEMENT" isn't recognized as a heading by
+        chunking.py's vocabulary) gets read as a run of low-completeness
+        "entries" -- these aren't jobs and grading them on job-entry
+        criteria is a category error the extractor can't currently avoid.
+      - Location detection favors "City, ST"/"City, Country" shapes; a
+        resume that legitimately omits location for on-campus/remote
+        listings (common in the corpus's student resumes: "UCR" with no
+        city/state repeated) reads as missing, which is arguably correct
+        under a strict reading of the rubric but may not match how a human
+        skimmed it.
+
+    Measured against the 39-resume corpus's human "experience" score (n=38,
+    R28 uncomputable on both sides): slope=0.237, intercept=12.57,
+    r^2=0.069, Spearman rho=0.214 (p=0.20, not significant), MAE=3.59. This
+    is real, weak signal -- reported honestly, not hidden. The clearest
+    disagreements are informative about WHY: R14 and R10 are both
+    Canva-style templates where the experience section's bullets were
+    never replaced ("Lorem ipsum dolor sit amet..." -- literal, unfilled
+    placeholder text), correctly scored near the bottom by the human
+    (4/20, 7/20) but only moderately by this scorer (12/20, 12/20) because
+    their headers ARE genuinely well-formed (real-looking org names,
+    titles, dates) even though there's nothing behind them. R13 is
+    starker: one entry, zero bullets, every header fact present -- 20/20
+    here, 8/20 from the human. This scorer is intentionally checking only
+    the rubric's stated mechanical fields, not "is there real substance
+    behind this entry" -- that's a content-quality question, and it's
+    AchievementsScorer's job, not this one's: R14 and R13 both correctly
+    come back uncomputable on the achievements dimension (zero bullets to
+    grade), so the overall pipeline doesn't end up crediting an empty
+    template just because this dimension can't see past its header line.
+    Whether a human rubric-reader was implicitly folding "does this look
+    like a real job" into their experience score too, beyond the rubric's
+    own stated definition, is plausible given this pattern -- the same gap
+    Item 4's WritingScorer found -- but unconfirmed at n=38; a difference
+    this large deserves a second human rater's read on a few of these
+    cases before concluding anything stronger than "the mechanical
+    definition and the human's actual grading behavior may not fully
+    agree."
     """
 
     name = "experience"
@@ -463,29 +528,34 @@ class ExperienceScorer:
 
     def score(self, resume_text: str, jd_text: str | None, matcher: SkillMatcher) -> DimensionResult:
         chunks = chunk_resume(resume_text)
-        exp_bullets = [
+        exp_chunks = [
             c for c in chunks
-            if c.kind is ChunkKind.BULLET and c.section and "experience" in c.section
+            if c.kind in (ChunkKind.BULLET, ChunkKind.PROSE) and c.section and "experience" in c.section
         ]
-        exp_entries = [
-            c for c in chunks
-            if c.kind is ChunkKind.PROSE and c.section and "experience" in c.section and c.is_scorable
-        ]
-        if not exp_bullets and not exp_entries:
+        entries, order_ok, comparable, violations = extract_all_experience_entries(exp_chunks)
+        if not entries:
             return DimensionResult(
                 dimension=self.name, score=None, max_points=self.max_points, status="uncomputable",
-                detail={"reason": "no section containing 'experience' found with any content"},
+                detail={"reason": "no section containing 'experience' yielded any real entries"},
             )
 
-        bullet_component = min(len(exp_bullets) / _EXPERIENCE_TARGET_BULLETS, 1.0)
-        entry_component = min(len(exp_entries) / _EXPERIENCE_TARGET_ENTRIES, 1.0)
-        pct = _EXPERIENCE_BULLET_WEIGHT * bullet_component + (1 - _EXPERIENCE_BULLET_WEIGHT) * entry_component
+        fact_counts = [sum(e.facts().values()) for e in entries]
+        completeness_pct = sum(fact_counts) / (4 * len(entries))
+        order_pct = 1.0 if comparable == 0 else max(0.0, 1 - violations / comparable)
+        pct = (1 - _EXPERIENCE_ORDER_WEIGHT) * completeness_pct + _EXPERIENCE_ORDER_WEIGHT * order_pct
+
         return DimensionResult(
             dimension=self.name,
             score=round(pct * self.max_points, 1),
             max_points=self.max_points,
             status="scored",
-            detail={"bullets": len(exp_bullets), "entries": len(exp_entries)},
+            detail={
+                "entries": len(entries),
+                "completeness_pct": round(completeness_pct, 3),
+                "order_ok": order_ok,
+                "order_comparable_pairs": comparable,
+                "order_violations": violations,
+            },
         )
 
 

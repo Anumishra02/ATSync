@@ -67,6 +67,8 @@ Nice to Have
 PROSE_ONLY_RESUME = """\
 Experience
 
+Acme Corp, Analyst, 2023-2024
+
 Developed and implemented a streamlined process for gathering
 requirements, reducing delivery time by 15 percent through close
 collaboration with cross-functional teams.
@@ -245,13 +247,29 @@ class TestOtherScorersStandalone:
         assert d.status == "scored"
         assert d.detail["quantified"] >= 1  # "2M requests", "40%" bullets
 
-    def test_experience_scorer_rewards_bullet_depth(self, matcher):
-        rich = ExperienceScorer().score(RESUME, None, matcher)
-        sparse = ExperienceScorer().score(
-            "Experience\n\nAcme Corp, Analyst, 2023-2024\n\nEducation\n\nB.A.\n", None, matcher
+    def test_experience_scorer_rewards_entry_completeness(self, matcher):
+        # Phase 1 item 1: this dimension checks the rubric's own mechanical
+        # fields (org, title, city/state, dates) per entry, not bullet
+        # volume -- see ExperienceScorer's docstring for why the previous
+        # bullet-count proxy was replaced outright.
+        complete = ExperienceScorer().score(
+            "Experience\n\n"
+            "Acme Corp, San Francisco, CA\n"
+            "Backend Engineer June 2023 - Present\n\n"
+            "- Built a FastAPI service handling 2M requests per day\n"
+            "- Migrated the datastore to PostgreSQL\n",
+            None, matcher,
         )
-        assert rich.status == "scored" and sparse.status == "scored"
-        assert rich.score > sparse.score
+        incomplete = ExperienceScorer().score(
+            "Experience\n\nAcme Corp\n\n- Built a FastAPI service handling 2M requests per day\n",
+            None, matcher,
+        )
+        assert complete.status == "scored" and incomplete.status == "scored"
+        assert complete.score > incomplete.score
+        # A fully-specified single entry should reach the max -- the
+        # "points per satisfied criterion" ceiling check from Phase 1
+        # item 3 applies here just as much as it did to Achievements.
+        assert complete.score == complete.max_points
 
     def test_relevance_scorer_not_applicable_without_jd(self, matcher):
         d = RelevanceScorer().score(RESUME, None, matcher)
