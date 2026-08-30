@@ -55,6 +55,23 @@ class _SequenceModel:
         return _FakeResponse(outcome)
 
 
+class _FakeDuration:
+    def __init__(self, seconds: int, nanos: int = 0):
+        self.seconds = seconds
+        self.nanos = nanos
+
+
+class _FakeRetryInfo:
+    """Duck-types google.rpc.error_details_pb2.RetryInfo well enough for
+    _quota_retry_delay's getattr-based extraction -- deliberately not the
+    real proto type, matching _quota_retry_delay's own choice not to
+    isinstance-check against it.
+    """
+
+    def __init__(self, seconds: int, nanos: int = 0):
+        self.retry_delay = _FakeDuration(seconds, nanos)
+
+
 class TestIsConfigured:
     def test_false_when_no_key(self, monkeypatch):
         monkeypatch.setattr(llm_client, "_API_KEY", None)
@@ -178,10 +195,17 @@ class TestGenerateJsonRetry:
         # 60s) retrying at full length could total well past Render's own
         # ~100s proxy ceiling -- trading a clear LLMError for a silently
         # dropped connection instead. The retry's own timeout must shrink
-        # to fit under _PROXY_SAFE_CEILING_SECONDS.
+        # to fit under _PROXY_SAFE_CEILING_SECONDS. Budget tracking is real
+        # elapsed time now (a fast-failing 429 shouldn't eat its whole
+        # requested timeout out of the budget) -- a real DeadlineExceeded
+        # genuinely does consume close to its full attempt_timeout (that's
+        # what "exceeded the deadline" means), simulated here with a fake
+        # clock rather than relying on a mock call that fails instantly.
         monkeypatch.setattr(llm_client, "_API_KEY", "fake-key")
         monkeypatch.setattr(llm_client, "_PROXY_SAFE_CEILING_SECONDS", 90)
         monkeypatch.setattr(llm_client.time, "sleep", lambda s: None)
+        clock = iter([0.0, 60.0, 60.0, 60.0])
+        monkeypatch.setattr(llm_client.time, "monotonic", lambda: next(clock))
         fake = _SequenceModel([DeadlineExceeded("slow"), '{"x": "hello"}'])
         monkeypatch.setattr(llm_client, "_get_model", lambda name: fake)
 
@@ -192,22 +216,83 @@ class TestGenerateJsonRetry:
         assert second_timeout < first_timeout
         assert second_timeout == pytest.approx(90 - 60 - 2)
 
-    def test_quota_exhaustion_is_not_retried_and_gets_a_clear_message(self, monkeypatch):
+    def test_quota_exhaustion_is_retried_using_googles_own_retry_delay(self, monkeypatch):
         # Found empirically: running the eval corpus against a real
         # free-tier key hit a 429 (ResourceExhausted) well before any
-        # genuine DeadlineExceeded did. Retrying it is pointless -- the
-        # quota is exhausted for a window this client's 2s backoff can't
-        # cover -- so it should fail on the first attempt with a message
-        # that doesn't dump Gemini's raw multi-line quota-violation text.
+        # genuine DeadlineExceeded did -- confirmed via AI Studio's usage
+        # dashboard to be batch/eval-script traffic tripping a per-minute
+        # cap, not sustained exhaustion, so a retry using Google's own
+        # suggested wait (not this client's short DeadlineExceeded backoff)
+        # is worth attempting rather than failing immediately.
         monkeypatch.setattr(llm_client, "_API_KEY", "fake-key")
         monkeypatch.setattr(llm_client.time, "sleep", lambda s: None)
-        fake = _SequenceModel([ResourceExhausted("429 quota exceeded, retry_delay { seconds: 39 }")])
+        error = ResourceExhausted("429 quota exceeded", details=[_FakeRetryInfo(seconds=39)])
+        fake = _SequenceModel([error, '{"x": "hello"}'])
+        monkeypatch.setattr(llm_client, "_get_model", lambda name: fake)
+
+        result = generate_json("prompt", _SCHEMA, timeout=10, retries=1)
+        assert result == {"x": "hello"}
+        assert len(fake.calls) == 2
+
+    def test_quota_retry_uses_googles_delay_not_the_deadline_backoff(self, monkeypatch):
+        monkeypatch.setattr(llm_client, "_API_KEY", "fake-key")
+        sleeps = []
+        monkeypatch.setattr(llm_client.time, "sleep", sleeps.append)
+        error = ResourceExhausted("429 quota exceeded", details=[_FakeRetryInfo(seconds=39)])
+        fake = _SequenceModel([error, '{"x": "hello"}'])
+        monkeypatch.setattr(llm_client, "_get_model", lambda name: fake)
+
+        generate_json("prompt", _SCHEMA, timeout=10, retries=1)
+        assert sleeps == [39.0]
+
+    def test_quota_error_without_retry_delay_detail_falls_back_to_a_default(self, monkeypatch):
+        # A 429 whose response doesn't carry a RetryInfo detail (a
+        # differently-shaped error, or a transport that doesn't surface
+        # it) shouldn't crash the retry logic -- falls back to a short
+        # default rather than failing to parse.
+        monkeypatch.setattr(llm_client, "_API_KEY", "fake-key")
+        sleeps = []
+        monkeypatch.setattr(llm_client.time, "sleep", sleeps.append)
+        error = ResourceExhausted("429 quota exceeded, no details attached")
+        fake = _SequenceModel([error, '{"x": "hello"}'])
+        monkeypatch.setattr(llm_client, "_get_model", lambda name: fake)
+
+        result = generate_json("prompt", _SCHEMA, timeout=10, retries=1)
+        assert result == {"x": "hello"}
+        assert sleeps == [llm_client._DEFAULT_QUOTA_BACKOFF_SECONDS]
+
+    def test_quota_exhaustion_exhausting_retries_gets_a_clear_message(self, monkeypatch):
+        # Repeated 429s (quota genuinely still exhausted, not just an
+        # unlucky burst) still end in a message that doesn't dump Gemini's
+        # raw multi-line quota-violation text.
+        monkeypatch.setattr(llm_client, "_API_KEY", "fake-key")
+        monkeypatch.setattr(llm_client.time, "sleep", lambda s: None)
+        error = ResourceExhausted("429 quota exceeded", details=[_FakeRetryInfo(seconds=1)])
+        fake = _SequenceModel([error, error])
         monkeypatch.setattr(llm_client, "_get_model", lambda name: fake)
 
         with pytest.raises(LLMError, match="quota is exhausted") as exc_info:
             generate_json("prompt", _SCHEMA, timeout=10, retries=1)
-        assert len(fake.calls) == 1
+        assert len(fake.calls) == 2
         assert "retry_delay" not in str(exc_info.value)
+
+    def test_quota_retry_is_also_capped_to_the_proxy_ceiling(self, monkeypatch):
+        # A ~39s quota wait stacked on top of a generous per-attempt
+        # timeout (cover letter's 60s) could push the total past Render's
+        # ~100s ceiling just as easily as a same-length DeadlineExceeded
+        # retry would -- the cap applies to either failure kind.
+        monkeypatch.setattr(llm_client, "_API_KEY", "fake-key")
+        monkeypatch.setattr(llm_client, "_PROXY_SAFE_CEILING_SECONDS", 90)
+        monkeypatch.setattr(llm_client.time, "sleep", lambda s: None)
+        error = ResourceExhausted("429 quota exceeded", details=[_FakeRetryInfo(seconds=39)])
+        fake = _SequenceModel([error, '{"x": "hello"}'])
+        monkeypatch.setattr(llm_client, "_get_model", lambda name: fake)
+
+        generate_json("prompt", _SCHEMA, timeout=60, retries=1)
+        second_timeout = fake.calls[1]["request_options"]["timeout"]
+        # 429s fail near-instantly (real elapsed time, not the requested
+        # timeout, is what's charged against the budget) -- ~90 - ~0 - 39.
+        assert second_timeout == pytest.approx(90 - 39, abs=1)
 
     def test_a_short_timeout_caller_gets_a_full_strength_retry(self, monkeypatch):
         # Grammar's 10s timeout has plenty of room under the ceiling --
