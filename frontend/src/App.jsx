@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { analyzeResume } from "@/lib/api";
 import GlobalStyles from "@/components/GlobalStyles";
-import Header from "@/components/Header";
+import Shell from "@/components/Shell";
 import LandingPage from "@/pages/LandingPage";
 import AnalysisProgressPage from "@/pages/AnalysisProgressPage";
 import ResultsPage from "@/pages/ResultsPage";
 import CoverLetterPage from "@/pages/CoverLetterPage";
 import HowItWorksPage from "@/pages/HowItWorksPage";
 
-// Route/state orchestrator. Behaviour is carried over unchanged from the
-// original single-file App.js during the split (step 2); the redesign
-// replaces each page's internals in later steps. Two axes of state:
+// Route/state orchestrator. Two axes of state:
 //   page    -- home | coverletter | howitworks
 //   subPage -- upload | loading | results  (only meaningful when page === "home")
+//
+// The redesign is landing on a page at a time (see the spec's build
+// order). Pages not yet rebuilt render inside <div className="legacy">,
+// which scopes the old stylesheet so it can't fight the design tokens.
 export default function App() {
   const [page, setPage] = useState("home");
   const [subPage, setSubPage] = useState("upload");
@@ -37,6 +39,15 @@ export default function App() {
   const goHome = () => {
     setPage("home");
     reset();
+  };
+
+  const navigate = (key, hash) => {
+    setPage(key);
+    if (hash) {
+      // section anchors land in step 7 when How-it-works is built; until
+      // then this is just a route switch.
+      requestAnimationFrame(() => document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" }));
+    }
   };
 
   const handleAnalyze = async () => {
@@ -66,38 +77,48 @@ export default function App() {
     setLoading(false);
   };
 
+  const isLanding = page === "home" && subPage === "upload";
+
   return (
     <>
       <GlobalStyles />
-      <Header page={page} onNavigate={setPage} onHome={goHome} />
+      <Shell page={page} onNavigate={navigate} onHome={goHome} showFooter={!isLanding}>
+        {page === "coverletter" && (
+          <div className="legacy">
+            <CoverLetterPage onBack={goHome} />
+          </div>
+        )}
+        {page === "howitworks" && (
+          <div className="legacy">
+            <HowItWorksPage onBack={goHome} />
+          </div>
+        )}
 
-      {page === "coverletter" && <CoverLetterPage onBack={() => setPage("home")} />}
-      {page === "howitworks" && <HowItWorksPage onBack={() => setPage("home")} />}
-
-      {page === "home" && (
-        <>
-          {subPage === "upload" && (
-            <LandingPage
-              file={file}
-              setFile={setFile}
-              jd={jd}
-              setJd={setJd}
-              error={error}
-              loading={loading}
-              onAnalyze={handleAnalyze}
-            />
-          )}
-          {subPage === "loading" && <AnalysisProgressPage loadStep={loadStep} />}
-          {subPage === "results" && analysis && (
-            <ResultsPage
-              analysis={analysis}
-              activeCategory={activeCategory}
-              setActiveCategory={setActiveCategory}
-              onReset={reset}
-            />
-          )}
-        </>
-      )}
+        {page === "home" && (
+          <div className="legacy">
+            {subPage === "upload" && (
+              <LandingPage
+                file={file}
+                setFile={setFile}
+                jd={jd}
+                setJd={setJd}
+                error={error}
+                loading={loading}
+                onAnalyze={handleAnalyze}
+              />
+            )}
+            {subPage === "loading" && <AnalysisProgressPage loadStep={loadStep} />}
+            {subPage === "results" && analysis && (
+              <ResultsPage
+                analysis={analysis}
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+                onReset={reset}
+              />
+            )}
+          </div>
+        )}
+      </Shell>
     </>
   );
 }

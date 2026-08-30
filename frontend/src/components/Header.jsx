@@ -1,29 +1,44 @@
-// Nav lifted from the original App.js. `page` is the current route key,
-// `onNavigate(key)` switches route, `onHome()` also resets the analyze
-// flow. The shared shell in step 3 restyles this.
+import Pill from "@/components/Pill";
+import { cn } from "@/lib/utils";
+
+const NAV = [
+  { key: "howitworks", label: "How it works" },
+  { key: "howitworks", label: "Features", hash: "features" },
+  { key: "coverletter", label: "Cover Letter" },
+];
+
+// Shared header. Fixed, 60px — pages still reserve pt-[60px]. `page` is
+// the active route key; onNavigate(key, hash?) switches route; onHome()
+// also resets the analyze flow.
 export default function Header({ page, onNavigate, onHome }) {
   return (
-    <nav className="nav">
-      <button className="nav-logo" onClick={onHome}>
-        <span className="nav-logo-dot" /> ATSync
-      </button>
-      <div className="nav-links">
+    <header className="fixed inset-x-0 top-0 z-50 h-[60px] border-b border-hairline bg-stage/80 backdrop-blur-md">
+      <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-6 md:px-12">
         <button
-          className={`nav-link ${page === "coverletter" ? "active" : ""}`}
-          onClick={() => onNavigate("coverletter")}
+          onClick={onHome}
+          className="font-pixel text-lg tracking-tight text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
-          Cover Letter
+          ATSync
         </button>
-        <button
-          className={`nav-link ${page === "howitworks" ? "active" : ""}`}
-          onClick={() => onNavigate("howitworks")}
-        >
-          How it works
-        </button>
-        <button className="nav-btn" onClick={onHome}>
-          Check Resume
-        </button>
+
+        <nav className="hidden items-center gap-7 md:flex">
+          {NAV.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => onNavigate(item.key, item.hash)}
+              className={cn(
+                "text-[13px] transition-colors duration-200 ease-stage hover:text-ink",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
+                page === item.key ? "text-ink" : "text-nav",
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <Pill onClick={onHome}>Check Resume</Pill>
       </div>
-    </nav>
+    </header>
   );
 }
