@@ -16,3 +16,17 @@ if (typeof window.matchMedia !== "function") {
     dispatchEvent: () => false,
   });
 }
+
+// jsdom has neither IntersectionObserver nor ResizeObserver; framer-motion's
+// whileInView / layout features need them. Stub as no-ops -- scroll-reveal
+// animations aren't under test, the content they wrap is.
+class NoopObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+}
+globalThis.IntersectionObserver ??= NoopObserver;
+globalThis.ResizeObserver ??= NoopObserver;

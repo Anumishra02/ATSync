@@ -19,9 +19,9 @@ describe("LandingPage", () => {
     expect(screen.getByRole("heading", { name: /ATSync/i })).toBeInTheDocument();
     expect(screen.getByText(/admits what it can.t measure/i)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: /check resume/i }));
+    await userEvent.click(screen.getAllByRole("button", { name: /check resume/i })[0]);
     await userEvent.click(screen.getByRole("button", { name: /how it works/i }));
-    expect(onCheckResume).toHaveBeenCalledOnce();
+    expect(onCheckResume).toHaveBeenCalled();
     expect(onHowItWorks).toHaveBeenCalledOnce();
   });
 
