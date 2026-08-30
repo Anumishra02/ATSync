@@ -1,13 +1,308 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/forms";
+
+/* ============================================================================
+   ATSync design tokens
+
+   One look, committed: a near-black stage, restrained white type, white
+   pill CTAs, a dot-matrix display font for the headline / progress /
+   numerals only. No light mode -- the stage is the product.
+
+   Raw tokens live on :root so `var(--ink)` works from inline styles and
+   hand-written CSS. The @theme inline block re-exports them (plus the
+   shadcn/ui semantic set, mapped onto the same palette) as Tailwind
+   utilities.
+   ========================================================================= */
+
+:root {
+  --radius: 0.625rem;
+
+  /* brand palette (from the UI spec) */
+  --bg: #050505; /* stage */
+  --ink: #fafafa; /* headline, primary */
+  --subtle: #a7a6a6; /* subcopy  (spec calls this --muted; renamed to
+                        avoid colliding with shadcn's --muted surface) */
+  --nav: #b6b5b5; /* header links */
+  --pill: #ffffff; /* CTA fill */
+  --pill-ink: #050505; /* CTA text */
+  --ok: #6ee7a8; /* scored, healthy */
+  --warn: #f5c26b; /* scored, weak */
+  --absent: #6b6b6b; /* uncomputable / not_applicable */
+  --hairline: rgba(250, 250, 250, 0.12);
+
+  /* shadcn/ui semantic tokens, mapped onto the stage */
+  --background: #050505;
+  --foreground: #fafafa;
+  --card: #0d0d0d;
+  --card-foreground: #fafafa;
+  --popover: #101010;
+  --popover-foreground: #fafafa;
+  --primary: #ffffff;
+  --primary-foreground: #050505;
+  --secondary: #171717;
+  --secondary-foreground: #fafafa;
+  --muted: #141414;
+  --muted-foreground: #a7a6a6;
+  --accent: #1a1a1a;
+  --accent-foreground: #fafafa;
+  --destructive: #f5c26b;
+  --border: rgba(250, 250, 250, 0.12);
+  --input: rgba(250, 250, 250, 0.16);
+  --ring: rgba(250, 250, 250, 0.42);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@theme inline {
+  /* shadcn semantic set */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* brand tokens -> utilities: bg-stage, text-ink, text-subtle, text-nav,
+     text-ok / bg-ok, text-warn, text-absent, border-hairline */
+  --color-stage: var(--bg);
+  --color-flare: #d9974a; /* warm accent -- the same tone as the fluid canvas */
+  --color-ink: var(--ink);
+  --color-subtle: var(--subtle);
+  --color-nav: var(--nav);
+  --color-pill: var(--pill);
+  --color-pill-ink: var(--pill-ink);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-absent: var(--absent);
+  --color-hairline: var(--hairline);
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-pixel: "Pixelify Sans", ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+
+  /* one easing, everywhere */
+  --ease-stage: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---- base ---------------------------------------------------------------- */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background: var(--bg);
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(250, 250, 250, 0.16);
+  }
+}
+
+@utility font-pixel {
+  font-family: var(--font-pixel);
+  font-feature-settings: "tnum" 1;
+}
+
+/* Count-up numerals and progress bars should hold still for anyone who
+   asked the OS to stop animating things. Page-level canvases check this
+   in JS too; this is the CSS backstop. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   Motion + accents
+
+   Palette is black / white / warm orange only. Two things live here:
+
+   1. A gradient BORDER treatment (`.card-bloom`) -- no fill, just a warm
+      hairline with a blurred glow hugging the edge, both lifting on hover.
+   2. Scroll-driven reveal utilities (`.sd-*`) -- these track the scroll
+      position continuously (native `animation-timeline: view()`), so they
+      read smoother than JS intersection triggers and can dissolve
+      symmetrically on the way out. Where the browser lacks support, the
+      content just renders normally.
+   ========================================================================= */
+
+/* ---- gradient border + edge glow ---------------------------------------- */
+
+.card-bloom {
+  position: relative;
+  isolation: isolate;
+}
+
+/* the visible warm hairline -- a gradient masked to the 1px ring only */
+.card-bloom::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(217, 151, 74, 0.55) 42%,
+    rgba(217, 151, 74, 0.12) 68%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.75;
+  transition: opacity 320ms var(--ease-stage);
+  pointer-events: none;
+}
+
+/* the same gradient, blurred and pushed behind -- glow on the border,
+   nothing across the middle (mask knocks the centre out) */
+.card-bloom::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 3px;
+  background: linear-gradient(
+    135deg,
+    rgba(217, 151, 74, 0.55) 0%,
+    rgba(217, 151, 74, 0.1) 46%,
+    rgba(255, 255, 255, 0.14) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter: blur(7px);
+  opacity: 0.5;
+  z-index: -1;
+  transition:
+    opacity 320ms var(--ease-stage),
+    filter 320ms var(--ease-stage);
+  pointer-events: none;
+}
+
+.card-bloom:hover::before {
+  opacity: 1;
+}
+.card-bloom:hover::after {
+  opacity: 0.95;
+  filter: blur(11px);
+}
+
+/* ---- scroll-driven reveals -------------------------------------------- */
+
+@keyframes sd-rise {
+  from {
+    opacity: 0;
+    transform: translateY(46px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* in on the way up the viewport, back out the top -- "emerging from and
+   receding into the dark" */
+@keyframes sd-scrub {
+  0% {
+    opacity: 0;
+    transform: translateY(46px);
+    filter: blur(10px);
+  }
+  18%,
+  74% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px);
+    filter: blur(6px);
+  }
+}
+
+@keyframes sd-mask-in {
+  from {
+    transform: translateY(115%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* heading slides up from behind a clip -- sharper than a fade */
+.sd-mask {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.08em;
+}
+.sd-mask > * {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .sd-rise,
+    .sd-scrub,
+    .sd-mask > * {
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+      animation-timeline: view();
+    }
+    .sd-rise {
+      animation-name: sd-rise;
+      animation-range: entry 2% cover 32%;
+    }
+    .sd-scrub {
+      animation-name: sd-scrub;
+      animation-range: entry 4% exit 98%;
+    }
+    .sd-mask > * {
+      animation-name: sd-mask-in;
+      animation-range: entry 0% cover 24%;
+    }
+  }
 }
