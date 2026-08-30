@@ -40,6 +40,12 @@ backend/data/*.zip
 backend/skill_db_relax_20.json
 backend/token_dist.json
 
+# resume_eval_predict.py's on-disk grammar-check cache -- a runtime
+# artifact of running that script locally (avoids re-burning Gemini quota
+# calling check_grammar on the same resume text every re-run), not repo
+# content. See that script's GRAMMAR_CACHE_PATH comment.
+evaluation/.cache/
+
 # evaluation/step0/Resumes/: 39-resume calibration set, all template/
 # placeholder identities verified individually (e.g. "(xxx) xxx-xxxx",
 # "hello@reallygreatsite.com" -- Canva's own template placeholder domain,

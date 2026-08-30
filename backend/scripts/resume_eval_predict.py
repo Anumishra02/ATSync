@@ -55,6 +55,7 @@ Run (from backend/):
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -62,6 +63,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+import services.analyzer as analyzer_module  # noqa: E402
 from services.analyzer import full_analysis  # noqa: E402
 from services.matching.chunking import normalize_document_text  # noqa: E402
 from services.parsing.pdf_extract import extract_document  # noqa: E402
@@ -71,6 +73,19 @@ from services.skills.taxonomy import Taxonomy  # noqa: E402
 
 EVAL_DIR = ROOT.parent / "evaluation"
 LABELS_PATH = EVAL_DIR / "labels.csv"
+
+# On-disk cache for check_grammar, scoped to this script only (monkeypatches
+# the module-level name full_analysis looks up -- check_grammar itself is
+# untouched, so production always calls Gemini fresh). Keyed on the exact
+# text sent to Gemini (check_grammar's own text[:2000] truncation), not the
+# resume id, so it self-invalidates if extraction ever changes for the same
+# resume. Found necessary directly, not preemptively: a single 39-resume
+# pass is close to the free tier's entire daily request allowance -- see
+# evaluation/backlog.md's Phase G loose-ends entry, where re-running this
+# exact script (plus a couple of ad hoc calls) was what exhausted it.
+# Delete the cache file if grammar_check.txt's prompt or analyzer.py's
+# _GRAMMAR_SCHEMA ever changes -- the key doesn't version either.
+GRAMMAR_CACHE_PATH = EVAL_DIR / ".cache" / "grammar_cache.json"
 JDS_PATH = EVAL_DIR / "jds.json"
 RESUMES_DIR = EVAL_DIR / "step0" / "Resumes"
 OUT_PATH = EVAL_DIR / "predictions.csv"
@@ -94,6 +109,33 @@ OUT_HEADER = [
     "sections_score", "contact_score", "file_format_score",
     "parse_status", "chars_extracted",
 ]
+
+
+def _load_grammar_cache() -> dict:
+    if GRAMMAR_CACHE_PATH.exists():
+        return json.loads(GRAMMAR_CACHE_PATH.read_text(encoding="utf-8"))
+    return {}
+
+
+def _save_grammar_cache(cache: dict) -> None:
+    GRAMMAR_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    GRAMMAR_CACHE_PATH.write_text(json.dumps(cache, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _install_cached_check_grammar() -> None:
+    cache = _load_grammar_cache()
+    real_check_grammar = analyzer_module.check_grammar
+
+    def cached_check_grammar(text: str) -> dict:
+        key = hashlib.sha256(text[:2000].encode("utf-8")).hexdigest()
+        if key in cache:
+            return cache[key]
+        result = real_check_grammar(text)
+        cache[key] = result
+        _save_grammar_cache(cache)
+        return result
+
+    analyzer_module.check_grammar = cached_check_grammar
 
 
 def score_one(matcher: SkillMatcher, resume_id: str, field: str, jd_text: str) -> dict:
@@ -142,6 +184,7 @@ def main() -> int:
         print(f"Missing {LABELS_PATH} -- run resume_eval_freeze_labels.py first.")
         return 1
 
+    _install_cached_check_grammar()
     jds = json.loads(JDS_PATH.read_text(encoding="utf-8"))
     matcher = SkillMatcher(Taxonomy.from_seed_json(SEED))
 
