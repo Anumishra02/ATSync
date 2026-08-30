@@ -35,10 +35,12 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any
 
 import google.generativeai as genai
 from dotenv import load_dotenv
+from google.api_core.exceptions import DeadlineExceeded, ResourceExhausted
 
 load_dotenv()
 
@@ -47,7 +49,24 @@ if _API_KEY:
     genai.configure(api_key=_API_KEY)
 
 DEFAULT_MODEL = "gemini-2.5-flash"
+
+# Per-attempt default -- callers with a longer job (cover letter generation
+# vs. a grammar check) pass their own `timeout`, not a second module
+# constant. See generate_json's docstring for why the retry below doesn't
+# just reuse this value verbatim on a slow caller's second attempt.
 DEFAULT_TIMEOUT_SECONDS = 10
+
+# Render's reverse proxy (this app's current host) drops a request around
+# ~100s with no error body at all -- not a Gemini error, not an HTTP
+# status, just a closed connection. A client-side timeout exists so a slow
+# call fails with a message instead of hanging forever; setting one longer
+# than the proxy's own ceiling (or retrying in a way that pushes the total
+# past it) defeats that -- it trades a clear LLMError for exactly the
+# silent failure a timeout is supposed to prevent. Kept a few seconds
+# under Render's own limit, not flush with it, for network/serialization
+# overhead outside the Gemini call itself.
+_PROXY_SAFE_CEILING_SECONDS = 90
+_RETRY_BACKOFF_SECONDS = 2
 
 # One model instance per model name, built on first use -- constructing a
 # GenerativeModel is cheap, but there's no reason to redo it on every call
@@ -83,6 +102,7 @@ def generate_json(
     *,
     model: str = DEFAULT_MODEL,
     timeout: float = DEFAULT_TIMEOUT_SECONDS,
+    retries: int = 1,
 ) -> dict:
     """Calls Gemini with structured-output mode and returns the parsed
     JSON object. response_schema is a plain JSON-Schema-shaped dict
@@ -90,24 +110,93 @@ def generate_json(
     uppercases `type` internally); see cover_letter.py and analyzer.py for
     examples.
 
-    Raises LLMError on any failure -- missing key, request failure, or a
-    response that doesn't parse as JSON. Never returns a partial or
-    best-effort result silently.
+    `timeout` is a per-attempt budget in seconds, not a single global
+    constant -- grammar checking and cover-letter generation have very
+    different runtimes and pass their own value (10s / 60s respectively;
+    see analyzer.py's _GRAMMAR_TIMEOUT_SECONDS and cover_letter.py's
+    _COVER_LETTER_TIMEOUT_SECONDS). On a DeadlineExceeded, retries up to
+    `retries` times after a short backoff -- but each retry's own timeout
+    is capped so the running total (attempts + backoffs so far) never
+    exceeds _PROXY_SAFE_CEILING_SECONDS. Without that cap, a caller with a
+    generous per-attempt timeout (cover letter's 60s) plus a naive same-
+    length retry could total well past Render's own ~100s proxy ceiling --
+    trading one timeout (a clear LLMError) for another (a silently dropped
+    connection with no error body at all). A short-timeout caller
+    (grammar's 10s) is unaffected by the cap in practice and still gets a
+    full-strength retry.
+
+    Only DeadlineExceeded is retried -- a bad key, a network failure, or
+    any other API error isn't a "the response was just slow" failure, and
+    retrying it isn't expected to help.
+
+    Raises LLMError on any failure -- missing key, request failure
+    (including a timeout that exhausts its retries), or a response that
+    doesn't parse as JSON. Never returns a partial or best-effort result
+    silently.
     """
     if not is_configured():
         raise LLMError("GEMINI_API_KEY is not configured")
 
-    try:
-        response = _get_model(model).generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=response_schema,
-            ),
-            request_options={"timeout": timeout},
-        )
-    except Exception as e:
-        raise LLMError(f"Gemini request failed: {e}") from e
+    genai_model = _get_model(model)
+    generation_config = genai.GenerationConfig(
+        response_mime_type="application/json",
+        response_schema=response_schema,
+    )
+
+    attempt_timeout = timeout
+    elapsed_budget = 0.0
+    attempts_left = 1 + max(0, retries)
+    attempt_number = 0
+
+    # print, not a logging framework -- matches this codebase's existing
+    # convention (see routes/resume.py's [upload] lines) and, on Render,
+    # lands in the same place a logging call would. Deliberately logs
+    # retry OUTCOME (attempted / succeeded-after-retry / exhausted), not
+    # just that a timeout happened -- whether a retry is worth keeping is
+    # an empirical question (a DeadlineExceeded on a job that's genuinely
+    # slow, not just unlucky, will likely fail again at a shorter budget
+    # too), and that needs production evidence, not a guess in either
+    # direction. If these never show "succeeded on retry", retries=0 for
+    # the caller in question is the change to make.
+    while True:
+        attempts_left -= 1
+        attempt_number += 1
+        try:
+            response = genai_model.generate_content(
+                prompt,
+                generation_config=generation_config,
+                request_options={"timeout": attempt_timeout},
+            )
+            if attempt_number > 1:
+                print(f"[llm.client] succeeded on retry (attempt {attempt_number}, timeout={attempt_timeout:.0f}s)")
+            break
+        except DeadlineExceeded as e:
+            elapsed_budget += attempt_timeout + _RETRY_BACKOFF_SECONDS
+            next_timeout = min(timeout, _PROXY_SAFE_CEILING_SECONDS - elapsed_budget)
+            if attempts_left <= 0 or next_timeout <= 0:
+                print(f"[llm.client] retries exhausted after {attempt_number} attempt(s), last timeout={attempt_timeout:.0f}s")
+                raise LLMError(
+                    "Gemini didn't respond in time. Please try again."
+                ) from e
+            print(f"[llm.client] DeadlineExceeded on attempt {attempt_number} (timeout={attempt_timeout:.0f}s) -- retrying with timeout={next_timeout:.0f}s")
+            time.sleep(_RETRY_BACKOFF_SECONDS)
+            attempt_timeout = next_timeout
+        except ResourceExhausted as e:
+            # Found empirically, not anticipated -- running this module's
+            # own eval-corpus check against a real (free-tier) key hit
+            # this within the first few calls: quota, not a timeout, was
+            # the failure this project's own key hit first. Not retried --
+            # Google's own retry_delay on this response is measured in
+            # tens of seconds to a day depending on which quota tripped,
+            # not this module's 2s backoff, so retrying immediately can't
+            # help and only spends another attempt against the same
+            # exhausted quota.
+            print(f"[llm.client] quota/rate limit hit on attempt {attempt_number}: {e}")
+            raise LLMError(
+                "Gemini's request quota is exhausted for now. Please try again later."
+            ) from e
+        except Exception as e:
+            raise LLMError(f"Gemini request failed: {e}") from e
 
     try:
         return json.loads(response.text)

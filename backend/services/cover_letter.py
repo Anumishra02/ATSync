@@ -41,6 +41,16 @@ _COVER_LETTER_SCHEMA = {
 _RESUME_CHARS = 2000
 _JD_CHARS = 1000
 
+# A full 250-300 word, 4-paragraph letter plus the structured wrapper
+# (subject line, key points, word count) is a much bigger generation job
+# than grammar checking's few-sentence JSON reply -- generate_json's own
+# 10s default (tuned for that faster call) was silently being used here
+# too, since nothing overrode it. That's the likely cause of production
+# timeouts on this route specifically, not a Gemini/model problem: the
+# model here is already gemini-2.5-flash (see services/llm/client.py's
+# DEFAULT_MODEL), not a slower Pro-tier model.
+_COVER_LETTER_TIMEOUT_SECONDS = 60
+
 
 class CoverLetterError(Exception):
     """Raised when a cover letter couldn't be generated. The route (not
@@ -56,7 +66,7 @@ def generate_cover_letter(resume_text: str, job_description: str, tone: str = "p
         tone=tone,
     )
     try:
-        data = generate_json(prompt, _COVER_LETTER_SCHEMA)
+        data = generate_json(prompt, _COVER_LETTER_SCHEMA, timeout=_COVER_LETTER_TIMEOUT_SECONDS)
     except LLMError as e:
         raise CoverLetterError(str(e)) from e
 
