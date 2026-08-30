@@ -1,13 +1,12 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+/* Design tokens, fonts, and the shared shell land in step 3 of the
+   redesign. For now this just wires Tailwind v4 in so `npm run build`
+   exercises it. The existing App.jsx still ships its own <style> block. */
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
 }

@@ -2,11 +2,11 @@
 import { useState } from "react";
 import axios from "axios";
 
-// REACT_APP_API_URL (set at build time, e.g. in Vercel's project settings)
+// VITE_API_URL (set at build time, e.g. in Vercel's project settings)
 // lets the backend host change without a code change + rebuild -- this
 // repo has already moved hosts once (Railway -> Render). Falls back to the
 // current known-good URL so a build without the env var set still works.
-const API = process.env.REACT_APP_API_URL || "https://atsync-5l6k.onrender.com/api/resume";
+const API = import.meta.env.VITE_API_URL || "https://atsync-5l6k.onrender.com/api/resume";
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
