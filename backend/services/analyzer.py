@@ -1,9 +1,7 @@
 import re
-import google.generativeai as genai
-import os
-import json
-from dotenv import load_dotenv
 
+from services.llm.client import LLMError, generate_json
+from services.llm.prompts import load_prompt
 from services.matching.chunking import (
     ChunkKind,
     FACT_LISTING_PATTERN,
@@ -14,14 +12,11 @@ from services.matching.chunking import (
 from services.scoring import EXPECTED_SECTIONS
 from services.scoring import check_sections as _heading_based_sections
 
-load_dotenv()
-_GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=_GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.5-flash")
-
 # check_grammar's fallback when the LLM can't be reached -- reused by both
-# the missing-key early return and the request-failure except branch so the
-# two paths can't silently drift into different shapes.
+# the missing-key case and any request-failure so the two paths can't
+# silently drift into different shapes. Key resolution, timeout, and error
+# handling now live in services/llm/client.py (Phase G) -- this module
+# only owns the fallback and how the parsed result gets shaped.
 _GRAMMAR_FALLBACK = {
     "score": 85,
     "mistakes": [],
@@ -30,12 +25,30 @@ _GRAMMAR_FALLBACK = {
     "tip": "Proofread your resume carefully"
 }
 
-# Grammar checking makes a network call per resume. Without a key it will
-# never succeed, so skip the request instead of paying (and risking a hang
-# on) a call that's certain to fail. With a key, a short client-side timeout
-# still bounds the call -- a stalled network shouldn't be able to hang
-# /analyze indefinitely either.
+# Grammar checking makes a network call per resume; a short client-side
+# timeout bounds it so a stalled network can't hang /analyze indefinitely.
 _GRAMMAR_TIMEOUT_SECONDS = 10
+
+_GRAMMAR_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "mistakes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "word": {"type": "string"},
+                    "suggestion": {"type": "string"},
+                    "context": {"type": "string"},
+                },
+                "required": ["word", "suggestion", "context"],
+            },
+        },
+        "score": {"type": "integer"},
+        "verdict": {"type": "string"},
+    },
+    "required": ["mistakes", "score", "verdict"],
+}
 
 _SECTION_DISPLAY_NAMES = {
     "experience": "Experience",
@@ -257,42 +270,20 @@ def check_sections(text: str) -> dict:
     }
 
 def check_grammar(text: str) -> dict:
-    if not _GEMINI_API_KEY:
-        # No key configured -- every call would fail anyway. Skip straight
-        # to the same fallback the except branch below returns, instead of
-        # making (and waiting on) a request that can't succeed.
+    try:
+        prompt = load_prompt("grammar_check", text=text[:2000])
+        result = generate_json(prompt, _GRAMMAR_SCHEMA, timeout=_GRAMMAR_TIMEOUT_SECONDS)
+    except LLMError:
+        # No key configured, the request failed, or the response wasn't
+        # parseable JSON -- generate_json collapses all three into
+        # LLMError; check_grammar's contract has always been "never fail
+        # the whole /analyze call over this one check," so all three get
+        # the same graceful fallback.
         return dict(_GRAMMAR_FALLBACK)
 
-    prompt = f"""
-Analyze this resume text for spelling and grammar mistakes.
-Return ONLY valid JSON, no markdown, no extra text:
-{{
-  "mistakes": [
-    {{"word": "misspelled_word", "suggestion": "correct_word", "context": "sentence containing it"}}
-  ],
-  "score": 0-100,
-  "verdict": "short verdict"
-}}
-Find up to 5 real mistakes only. If no mistakes found, return empty mistakes array and score 100.
-Resume text:
-{text[:2000]}
-"""
-    try:
-        response = model.generate_content(
-            prompt, request_options={"timeout": _GRAMMAR_TIMEOUT_SECONDS}
-        )
-        raw = response.text.strip()
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        raw = raw.strip()
-        result = json.loads(raw)
-        result["issues"] = len(result.get("mistakes", []))
-        result["tip"] = "Fix spelling and grammar errors for a professional impression"
-        return result
-    except Exception:
-        return dict(_GRAMMAR_FALLBACK)
+    result["issues"] = len(result.get("mistakes", []))
+    result["tip"] = "Fix spelling and grammar errors for a professional impression"
+    return result
 
 def full_analysis(resume_text: str, filename: str, file_size: int, job_description: str, ats_data: dict) -> dict:
     quantification = check_quantification(resume_text)

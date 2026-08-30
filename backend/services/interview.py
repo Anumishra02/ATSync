@@ -8,6 +8,12 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-2.5-flash")
 
+# Same hang risk check_grammar had before it was fixed (services/llm/client.py):
+# no timeout meant a stalled network call could hang the request indefinitely.
+# Bounds it here without a full migration onto the shared client -- see
+# evaluation/backlog.md's Phase G loose-ends entry.
+_INTERVIEW_TIMEOUT_SECONDS = 10
+
 def generate_interview_questions(resume_text: str, job_description: str) -> dict:
 
     prompt = f"""
@@ -40,7 +46,9 @@ Be very specific to THIS candidate's actual resume. Not generic questions.
 Return only raw JSON, nothing else.
 """
 
-    response = model.generate_content(prompt)
+    response = model.generate_content(
+        prompt, request_options={"timeout": _INTERVIEW_TIMEOUT_SECONDS}
+    )
 
     raw = response.text.strip()
 

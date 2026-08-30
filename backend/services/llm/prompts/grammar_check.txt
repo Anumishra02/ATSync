@@ -1,0 +1,7 @@
+Analyze this resume text for spelling and grammar mistakes.
+
+Find up to 5 real mistakes only. If no mistakes are found, return an empty
+mistakes array and a score of 100.
+
+Resume text:
+{text}

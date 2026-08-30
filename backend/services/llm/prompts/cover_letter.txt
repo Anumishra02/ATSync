@@ -1,0 +1,17 @@
+You are an expert career coach and professional writer.
+
+Write a compelling cover letter based on this resume and job description.
+
+RESUME:
+{resume_text}
+
+JOB DESCRIPTION:
+{job_description}
+
+TONE: {tone}
+
+Rules:
+- 250-300 words, 4 paragraphs: opening hook, relevant experience, why this company, call to action
+- Be specific to THIS candidate's actual experience
+- Tone should be {tone}
+- Opening line must NOT start with "I am writing to apply for"

@@ -1,0 +1,42 @@
+name: tests
+
+# Phase G, backlog.md item 1: turn the regression gates (structure and,
+# as of this workflow, the whole dual-mode pipeline -- see
+# tests/test_structure_regression_gate.py and
+# tests/test_v2_analyze_regression_gate.py) into an actual CI contract
+# instead of a test file someone has to remember to run by hand. Gates on
+# coverage and mean signed gap direction; deliberately does not gate on
+# Spearman rho (too noisy at this sample size -- see those tests' own
+# docstrings for the measured numbers behind that call).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run test suite
+        # -m "not slow" is pytest.ini's own default addopts, kept explicit
+        # here so this workflow doesn't silently start running the
+        # network-dependent tests (real MX lookups, HTTP HEAD requests) if
+        # that default ever changes locally without this file being
+        # updated to match.
+        run: python -m pytest -q -m "not slow"

@@ -2,17 +2,19 @@
 import io
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, Form, UploadFile, File, HTTPException
 from pydantic import BaseModel
+from services.analysis.pipeline import run_analysis
 from services.parser import extract_text_from_pdf as _legacy_extract_text_from_pdf
 from services.parsing.pdf_extract import extract_document
 from services.scoring import legacy_ats_score
 from services.interview import generate_interview_questions
 from services.analyzer import full_analysis
-from services.cover_letter import generate_cover_letter
+from services.cover_letter import CoverLetterError, generate_cover_letter
 from services.matching.chunking import normalize_document_text
 from services.skills.matcher import SkillMatcher
 from services.skills.taxonomy import Taxonomy
+from services.verification.contact_links import build_report
 
 router = APIRouter()
 
@@ -137,14 +139,105 @@ def analyze_resume(request: FullAnalysisRequest):
 
 @router.post("/cover-letter")
 def get_cover_letter(request: CoverLetterRequest):
-    if not request.resume_text or not request.job_description:
-        raise HTTPException(status_code=400, detail="Both fields required")
+    if not request.resume_text:
+        raise HTTPException(status_code=422, detail="resume_text is required")
+    if not request.job_description:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "job_description is required. A cover letter needs a role to "
+                "write against -- without one the result would be a generic "
+                "template, not a tailored artifact, so this endpoint refuses to "
+                "generate one rather than producing something weak."
+            ),
+        )
     try:
-        result = generate_cover_letter(
+        return generate_cover_letter(
             request.resume_text,
             request.job_description,
             request.tone
         )
-        return result
+    except CoverLetterError as e:
+        # 502: the request to this endpoint was well-formed, generation
+        # failed upstream (missing/invalid API key, Gemini request
+        # failure, or a response that didn't parse) -- see
+        # services/llm/client.py's LLMError, which CoverLetterError wraps.
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# ── /v2/analyze -- optional-JD analysis with the three-status model ───────────
+#
+# Distinct from /analyze (untouched, above): that route always requires a
+# JD and returns the legacy flat-checks shape. /v2/analyze accepts an
+# uploaded PDF directly (not pre-extracted text) so it can use all three
+# parser channels -- text_layer, annotations, merged (Phase D) -- and the
+# contact/link verification module (Phase E), neither of which /analyze's
+# resume_text-in-JSON-out shape has access to. The JD is optional here:
+# a scorer whose requires_jd is True (currently only Relevance) is simply
+# never invoked (see services/analysis/pipeline.py), and every dimension
+# result carries its own status (scored/uncomputable/not_applicable) so a
+# caller can tell "ran and produced this score" apart from "didn't run."
+
+@router.post("/v2/analyze")
+async def analyze_resume_v2(
+    file: UploadFile = File(...),
+    job_description: str | None = Form(None),
+):
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files allowed")
+
+    file_bytes = await file.read()
+    try:
+        extraction = extract_document(io.BytesIO(file_bytes))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Could not parse this PDF: {e}")
+
+    if not extraction.is_readable:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This PDF has no extractable text -- it looks like a scanned "
+                "image rather than a text-based document. Export or re-save "
+                "it as a text PDF (not a scan) and try again."
+            ),
+        )
+
+    # .merged, not .text -- carries invisible-annotation links (an icon-only
+    # mailto:, say) that the text layer alone would never see. See
+    # services/parsing/pdf_extract.py's module docstring.
+    resume_text = normalize_document_text(extraction.merged)
+    jd_text = normalize_document_text(job_description) if job_description else None
+
+    analysis = run_analysis(resume_text, jd_text, _matcher)
+
+    annotation_uris = [a.uri for a in extraction.annotations]
+    contact_report = await build_report(resume_text, annotation_uris)
+
+    return {
+        **analysis.to_dict(),
+        "parse": {
+            "status": extraction.parse_status,
+            "columns": extraction.column_counts,
+            "unclickable_urls": extraction.unclickable_urls,
+            "invisible_annotation_count": len(extraction.invisible_annotations),
+        },
+        "contact_links": {
+            "summary": contact_report.summary,
+            "issue_count": contact_report.issue_count,
+            "phones": [
+                {"raw": p.raw, "is_valid": p.is_valid, "e164": p.e164, "issue": p.issue}
+                for p in contact_report.phones
+            ],
+            "emails": [
+                {"raw": e.raw, "is_valid_syntax": e.is_valid_syntax,
+                 "is_deliverable": e.is_deliverable, "issue": e.issue}
+                for e in contact_report.emails
+            ],
+            "links": [
+                {"url": l.url, "status": l.status.value, "http_status": l.http_status,
+                 "platform_issue": l.platform_issue}
+                for l in contact_report.links
+            ],
+            "missing": contact_report.completeness.missing if contact_report.completeness else [],
+        },
+    }

@@ -1,81 +1,68 @@
+"""Cover letter generation (Phase G).
 
+Deliberately its own small module, not folded into services/analysis/ or
+services/scoring.py: cover letter generation is generative, not
+evaluative. There is no rubric, no human labels, no correlation to
+measure -- "is this cover letter good" isn't a question this codebase's
+measurement discipline has an answer to, and it never will in the same
+sense the scorers do. See README's Measurement section for why that's
+stated outright rather than left ambiguous.
 
-
-
-import requests
-import os
-import json
-from dotenv import load_dotenv
-
-load_dotenv()
-
-API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-
-def generate_cover_letter(resume_text: str, job_description: str, tone: str = "professional") -> dict:
-    print(f"[cover_letter] Generating with tone={tone}")
-    print(f"[cover_letter] API key present: {'YES' if API_KEY else 'NO'}")
-
-    prompt = f"""
-You are an expert career coach and professional writer.
-
-Write a compelling cover letter based on this resume and job description.
-
-RESUME:
-{resume_text[:2000]}
-
-JOB DESCRIPTION:
-{job_description[:1000]}
-
-TONE: {tone}
-
-Rules:
-- 250-300 words, 4 paragraphs: opening hook, relevant experience, why this company, call to action
-- Be specific to THIS candidate's actual experience
-- Tone should be {tone}
-- Opening line must NOT start with "I am writing to apply for"
-
-Return ONLY this JSON, no markdown, no extra text:
-{{
-    "cover_letter": "full letter text with paragraphs separated by \\n\\n",
-    "subject_line": "Application for [Role] - [Name]",
-    "key_points": ["key highlight 1", "key highlight 2", "key highlight 3"],
-    "word_count": 270
-}}
+It also does NOT share services/analysis/models.py's three-status
+(scored/uncomputable/not_applicable) JD-optional model. That model exists
+because a *score* can meaningfully drop from /100 to /85 when a JD isn't
+supplied -- fewer points were available, not zero. A cover letter has no
+such partial mode: without a JD there's no role and no company to write
+against, so the result would be a generic template, not a tailored
+artifact. Rather than answer that request with something weak, the route
+refuses it outright (422) -- the JD stays hard-required here specifically
+because it's optional everywhere else in this codebase.
 """
 
-    headers = {"Content-Type": "application/json"}
-    data = {"contents": [{"parts": [{"text": prompt}]}]}
+from __future__ import annotations
 
-    response = requests.post(
-        f"{GEMINI_URL}?key={API_KEY}",
-        headers=headers,
-        json=data
+from services.llm.client import LLMError, generate_json
+from services.llm.prompts import load_prompt
+
+_COVER_LETTER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "cover_letter": {"type": "string"},
+        "subject_line": {"type": "string"},
+        "key_points": {"type": "array", "items": {"type": "string"}},
+        "word_count": {"type": "integer"},
+    },
+    "required": ["cover_letter", "subject_line", "key_points", "word_count"],
+}
+
+# Same truncation the original implementation used -- keeps the prompt
+# (and cost) bounded; not re-measured/re-tuned here, out of scope for this
+# pass.
+_RESUME_CHARS = 2000
+_JD_CHARS = 1000
+
+
+class CoverLetterError(Exception):
+    """Raised when a cover letter couldn't be generated. The route (not
+    this module) decides what HTTP status that becomes.
+    """
+
+
+def generate_cover_letter(resume_text: str, job_description: str, tone: str = "professional") -> dict:
+    prompt = load_prompt(
+        "cover_letter",
+        resume_text=resume_text[:_RESUME_CHARS],
+        job_description=job_description[:_JD_CHARS],
+        tone=tone,
     )
-
-    print(f"[cover_letter] Status code: {response.status_code}")
-
-    if response.status_code != 200:
-        print(f"[cover_letter] Error response: {response.text[:300]}")
-        raise Exception(f"Gemini API error {response.status_code}: {response.text[:200]}")
-
-    result = response.json()
-    raw = result['candidates'][0]['content']['parts'][0]['text']
-    print(f"[cover_letter] Raw response: {raw[:100]}")
-
-    # Clean markdown fences if present
-    raw = raw.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    raw = raw.strip()
-
-    data_parsed = json.loads(raw)
+    try:
+        data = generate_json(prompt, _COVER_LETTER_SCHEMA)
+    except LLMError as e:
+        raise CoverLetterError(str(e)) from e
 
     return {
-        "cover_letter": data_parsed.get("cover_letter", ""),
-        "subject_line": data_parsed.get("subject_line", ""),
-        "key_points": data_parsed.get("key_points", []),
-        "word_count": data_parsed.get("word_count", 0),
+        "cover_letter": data.get("cover_letter", ""),
+        "subject_line": data.get("subject_line", ""),
+        "key_points": data.get("key_points", []),
+        "word_count": data.get("word_count", 0),
     }
