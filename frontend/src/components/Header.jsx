@@ -1,15 +1,20 @@
 import Pill from "@/components/Pill";
 import { cn } from "@/lib/utils";
 
+// Four destinations, four pages -- "Features" used to share howitworks's
+// key with a scroll-to hash, which meant two nav links pointed at the
+// same route. They're genuinely separate pages now: how it works is the
+// process (what happens when you upload), features is the product (what
+// it's scored on and why).
 const NAV = [
   { key: "howitworks", label: "How it works" },
-  { key: "howitworks", label: "Features", hash: "features" },
+  { key: "features", label: "Features" },
   { key: "coverletter", label: "Cover Letter" },
 ];
 
 // Shared header. Fixed, 60px — pages still reserve pt-[60px]. `page` is
-// the active route key; onNavigate(key, hash?) switches route; onHome()
-// also resets the analyze flow.
+// the active route key; onNavigate(key) switches route; onHome() also
+// resets the analyze flow.
 export default function Header({ page, onNavigate, onHome }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-[60px] border-b border-hairline bg-stage/80 backdrop-blur-md">
@@ -24,8 +29,8 @@ export default function Header({ page, onNavigate, onHome }) {
         <nav className="hidden items-center gap-7 md:flex">
           {NAV.map((item) => (
             <button
-              key={item.label}
-              onClick={() => onNavigate(item.key, item.hash)}
+              key={item.key}
+              onClick={() => onNavigate(item.key)}
               className={cn(
                 "text-[13px] transition-colors duration-200 ease-stage hover:text-ink",
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",

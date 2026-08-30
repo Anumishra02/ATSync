@@ -1,66 +1,48 @@
-// Content lifted verbatim from the original App.js. Step 7 of the
-// redesign rewrites this page's copy and sections against the real
-// pipeline (two modes, six dimensions, the uncomputable worked example,
-// verified checks, how it was measured).
+// Step 7 of the redesign. Rewritten against the real /v2/analyze pipeline
+// instead of the original 6-step marketing copy -- and split from the
+// product-capability content, which now has its own page (FeaturesPage).
+// This page is the process: four steps, sequential, mirroring the labels
+// the progress screen itself shows while a resume is actually running
+// through it (see pages/AnalysisProgressPage.jsx's step labels).
 const steps = [
   {
     num: "01",
-    title: "Upload your resume",
-    desc: "Drag and drop your PDF resume into the analyzer. Our system instantly extracts and parses all content — work experience, skills, education, and contact info.",
+    title: "Parse",
+    desc: "Your PDF is read three ways at once: the text layer, any hyperlink annotations (an icon-only email or LinkedIn link the text alone would never show), and how that maps onto sections — Experience, Skills, Education, and the rest.",
     card: [
-      { icon: "📄", text: "PDF format supported" },
-      { icon: "⚡", text: "Instant text extraction" },
-      { icon: "🔒", text: "Your data is never stored" },
+      { icon: "📄", text: "Text layer + hyperlink annotations" },
+      { icon: "🔗", text: "Catches icon-only links plain text misses" },
+      { icon: "📋", text: "Sections identified from real headings" },
     ],
   },
   {
     num: "02",
-    title: "Paste the job description",
-    desc: "Copy the full job description from LinkedIn, Indeed, or any job board and paste it in. The more detailed the JD, the more accurate your ATS score will be.",
+    title: "Score",
+    desc: "Six dimensions, each checked against a fixed rubric — not a keyword count. See Features for exactly what each one measures and how many points it's worth.",
     card: [
-      { icon: "🎯", text: "Keyword extraction from JD" },
-      { icon: "🔍", text: "Skill gap identification" },
-      { icon: "📊", text: "Match percentage calculated" },
+      { icon: "🎯", text: "Six rubric dimensions, 100 points" },
+      { icon: "🧭", text: "Relevance only runs with a job description" },
+      { icon: "⚖️", text: "Full breakdown on the Features page" },
     ],
   },
   {
     num: "03",
-    title: "AI analyzes your resume",
-    desc: "Our AI runs 7 crucial checks — ATS score, quantified impact, repetition, contact info, file format, section completeness, and spelling & grammar.",
+    title: "Verify",
+    desc: "Contact info and links are checked, not estimated: phone validity by region, email deliverability by MX lookup, and whether your links actually resolve.",
     card: [
-      { icon: "🤖", text: "Powered by Google Gemini AI" },
-      { icon: "✅", text: "7 checks in under 10 seconds" },
-      { icon: "📈", text: "Weighted overall score generated" },
+      { icon: "📞", text: "Phone validity by region" },
+      { icon: "📧", text: "Email deliverability (MX lookup)" },
+      { icon: "🔗", text: "Link reachability" },
     ],
   },
   {
     num: "04",
-    title: "Review detailed results",
-    desc: "Get a full breakdown of every check with specific issues found, your score per category, and actionable tips to fix each problem.",
+    title: "Report",
+    desc: "Your score, the points it's actually out of, and — honestly — any dimension it couldn't assess, instead of a silent zero.",
     card: [
-      { icon: "📋", text: "Category-by-category breakdown" },
-      { icon: "💡", text: "Specific improvement tips" },
-      { icon: "🏆", text: "Overall score out of 100" },
-    ],
-  },
-  {
-    num: "05",
-    title: "Generate cover letter",
-    desc: "Use the Cover Letter Generator to create a tailored, professional cover letter based on your resume and the job description — in your chosen tone.",
-    card: [
-      { icon: "✉️", text: "AI-written in seconds" },
-      { icon: "🎨", text: "5 tone options to choose from" },
-      { icon: "📋", text: "One-click copy to clipboard" },
-    ],
-  },
-  {
-    num: "06",
-    title: "Apply with confidence",
-    desc: "With an optimized resume and a polished cover letter, you're ready to apply. Track your improvements by re-analyzing after making changes.",
-    card: [
-      { icon: "🚀", text: "ATS-optimized resume" },
-      { icon: "📩", text: "Tailored cover letter ready" },
-      { icon: "🎯", text: "Higher interview callback rate" },
+      { icon: "🏆", text: "Score with its real denominator" },
+      { icon: "⚠️", text: "Uncomputable dimensions shown as such" },
+      { icon: "📋", text: "Per-dimension detail on request" },
     ],
   },
 ];
@@ -76,9 +58,9 @@ export default function HowItWorksPage({ onBack }) {
           How it works
         </div>
         <h1 className="hiw-title">
-          From upload to <span>offer letter</span>
+          What happens when you <span>upload a resume</span>
         </h1>
-        <p className="hiw-sub">6 simple steps to get your resume ATS-ready and land more interviews</p>
+        <p className="hiw-sub">Four steps, in order — the same ones the progress screen shows while it runs.</p>
       </div>
       <div className="hiw-steps">
         {steps.map((step, i) => (
