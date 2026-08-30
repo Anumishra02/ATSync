@@ -162,8 +162,15 @@ def test_order_check_does_not_compare_across_differently_labeled_sections():
 
 
 def test_zero_real_entries_is_the_uncomputable_case():
-    # Real case (R28): a prose-only paragraph under "Experience" with no
-    # header-shaped lines and no bullets yields nothing to grade.
+    # Synthetic: a prose-only paragraph under "Experience" with no
+    # header-shaped lines and no bullets yields nothing to grade. NOT R28
+    # -- that was this test's original claim, and it was wrong (checked
+    # directly, not assumed): R28's real failure is a merged heading
+    # ("Experience PUTNAM ASSOCIATES BURLINGTON, MA", 5 words, fails the
+    # chunker's heading-shape gate), not an absence of bullets -- it has
+    # plenty. See scorers.py's ExperienceScorer docstring for the corrected
+    # account and services/analysis/scorers.py's _EXPERIENCE_ORDER_WEIGHT
+    # comment for where this misattribution also lived.
     text = (
         "Experience\n\n"
         "Developed and implemented a streamlined process for gathering "

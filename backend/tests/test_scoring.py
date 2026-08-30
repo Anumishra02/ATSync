@@ -105,9 +105,17 @@ class TestScoring:
             matcher, RESUME, JD
         ).score
 
-    def test_empty_jd_scores_zero_without_dividing_by_zero(self, matcher):
+    def test_empty_jd_is_uncomputable_not_a_confident_zero(self, matcher):
+        # Was `score == 0` -- itself the bug: an empty JD has nothing to
+        # compare the resume against, which is not the same claim as "the
+        # resume matched none of the JD's requirements." See score_resume's
+        # docstring (Phase C1's contrast test found this the same way it
+        # found bug-2's need in check_quantification -- by refusing to
+        # trust a result before checking the mechanism behind it).
         r = score_resume(matcher, RESUME, "")
-        assert r.score == 0 and r.matched == [] and r.missing == []
+        assert r.score is None
+        assert r.matched == [] and r.missing == []
+        assert r.weight_total == 0
 
     def test_perfect_coverage_scores_one_hundred(self, matcher):
         jd = "Requirements\n\n• Must have Python and PostgreSQL\n"

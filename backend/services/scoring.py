@@ -93,7 +93,11 @@ class MissingSkill:
 
 @dataclass
 class ScoreResult:
-    score: int
+    # None means uncomputable, not a confident zero -- see score_resume's
+    # docstring. A resume-independent 0 (every JD requirement unweighted,
+    # weight_total == 0) means the JD gave nothing to compare against, not
+    # that the resume failed to match anything.
+    score: int | None
     matched: list[MatchedSkill] = field(default_factory=list)
     missing: list[MissingSkill] = field(default_factory=list)
     sections: dict[str, bool] = field(default_factory=dict)
@@ -160,6 +164,21 @@ def score_resume(
     """Score a resume against a job description.
 
     Both texts must already be normalized (see chunking's precondition).
+
+    Returns score=None (uncomputable, not a confident 0) when the JD
+    yields zero weighted requirements at all (weight_total == 0) --
+    e.g. an empty JD, or one whose extractor (seed, or the ESCO fallback
+    via HybridSkillMatcher when both layers come up empty) finds nothing
+    to grade against. The guard is written against `total`, the extractor
+    chain's actual output, not against which matcher produced it -- this
+    behaves identically whether `matcher` is a plain SkillMatcher or a
+    HybridSkillMatcher, by construction, not by a special case for either.
+    A JD with genuinely no recognizable requirement is a case with nothing
+    to compare the resume against, not a case where the resume failed to
+    match anything -- those are different claims, and returning 0 for both
+    conflated them. Found while re-running the relevance contrast test
+    (Phase C1): the same failure class check_quantification's uncomputable
+    guard was built for, in a different scoring path.
     """
     resume_chunks = chunk_resume(resume_text)
     jd_chunks = chunk_job_description(jd_text)
@@ -200,7 +219,7 @@ def score_resume(
 
     total = sum(weights.values())
     got = sum(m.weight for m in matched)
-    score = round(100 * got / total) if total else 0
+    score = round(100 * got / total) if total else None
 
     matched.sort(key=lambda m: (-m.weight, m.name))
     missing.sort(key=lambda m: (-m.weight, m.name))

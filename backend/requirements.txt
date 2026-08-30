@@ -19,3 +19,10 @@ reportlab==5.0.0
 openpyxl==3.1.5
 numpy==2.5.1
 scipy==1.18.0
+
+# Phase E: contact & link verification (services/verification/contact_links.py)
+phonenumbers==9.0.38
+email-validator==2.3.0
+dnspython==2.8.0
+httpx==0.28.1
+tldextract==5.3.2

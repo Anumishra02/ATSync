@@ -1,0 +1,16 @@
+# Phase A skill-extractor benchmark (evaluation/backlog.md, "Phase A") --
+# separate from requirements.txt on purpose. These pull in torch and a
+# 588MB spaCy model; keep them out of the default install and off CI, which
+# stays on the seed taxonomy per backend/data/README.md's network-free rule.
+#
+# ojd-daps-skills is NOT here: pins numpy<2.0, no prebuilt wheel for
+# Python 3.13, no C compiler on this machine to build it from source.
+# See services/skills/extractors.py's module docstring.
+
+esco-skill-extractor==0.1.18
+skillNer==1.0.3
+spacy==3.8.16
+ipython==9.17.0
+
+# After installing the above:
+#   python -m spacy download en_core_web_lg   # pins to spacy==3.8.16's compatible release (3.8.0)

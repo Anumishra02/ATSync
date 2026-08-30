@@ -8,13 +8,20 @@ n=10/28 to gate on -- this cycle's own bootstrap CI on covered rho spans
 -0.23 to +0.96"). MAE and gap direction are stable enough to be contracts;
 rho isn't, at this sample size.
 
-Current measured baseline (39 resumes, evaluation/step0/): MAE=2.49,
-mean_signed_gap=-0.74, coverage=39/39. Thresholds below have real margin
-above these -- not set to the exact measured value, which would make this
-gate fail on ordinary floating-point/model noise rather than an actual
-regression. If StructureScorer's real behavior changes (taxonomy swap,
-heading-vocabulary edit, anything), re-measure and move these
-deliberately; don't loosen them just to make a failing test pass.
+Current measured baseline (39 resumes, evaluation/step0/), re-measured
+after the heading-prefix-split fix (chunking.py's _split_heading_prefix --
+see evaluation/backlog.md's Phase D section): MAE=2.41, mean_signed_gap
+=-0.67, coverage=39/39. Reported fresh, not compared against the pre-fix
+figure (2.49 / -0.74) -- both are well inside the thresholds below either
+way, and this dimension's coverage was already 39/39 before the fix (R28's
+uncomputable case was Experience, not Structure), so this re-measurement
+confirms no regression rather than showing a fix's effect. Thresholds
+below have real margin above the measured baseline -- not set to the
+exact measured value, which would make this gate fail on ordinary
+floating-point/model noise rather than an actual regression. If
+StructureScorer's real behavior changes (taxonomy swap, heading-vocabulary
+edit, anything), re-measure and move these deliberately; don't loosen them
+just to make a failing test pass.
 """
 
 from __future__ import annotations

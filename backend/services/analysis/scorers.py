@@ -454,6 +454,16 @@ class RelevanceScorer:
                 dimension=self.name, score=None, max_points=self.max_points, status="not_applicable",
             )
         result = score_resume(matcher, resume_text, jd_text)
+        if result.score is None:
+            # JD yielded zero weighted requirements (empty, or the
+            # extractor chain -- seed, or seed+ESCO fallback -- found
+            # nothing to grade against) -- see score_resume's docstring.
+            # Different from not_applicable (no JD at all): a JD IS
+            # present, it just gave nothing to compare the resume to.
+            return DimensionResult(
+                dimension=self.name, score=None, max_points=self.max_points, status="uncomputable",
+                detail={"reason": "JD yielded no weighted requirements to score against"},
+            )
         pct = result.score / 100.0
         return DimensionResult(
             dimension=self.name,
@@ -470,9 +480,25 @@ class RelevanceScorer:
 # "Accounting Experience", none of which equal the literal string
 # "experience". An exact-match version of this scorer found zero
 # experience content on 33 of the 39 resumes; the substring version finds
-# content on 38/39 (the one miss, R28, is a real PDF extraction failure
-# upstream -- its whole document collapses under one garbled heading,
-# "ane oe" -- not a scorer bug; see experience.py's module docstring).
+# content on 38/39 (the one miss, R28 -- CORRECTED: this was originally
+# recorded as "a real PDF extraction failure upstream... its whole
+# document collapses under one garbled heading, 'ane oe'" and offered as
+# evidence the uncomputable guard fires on a genuine parse failure, not
+# just synthetic ones. Checked directly with pymupdf's plain text
+# extraction (evaluation/backlog.md's Phase D section) and that account is
+# wrong: R28's text layer is not corrupt. "ane oe" is real (the header
+# name "JANE DOE" gets split by an unrelated, minor artifact) but has
+# nothing to do with why this scorer finds no experience content. The
+# actual cause: the JD's -- no, the RESUME's -- Experience heading merges
+# onto one line with the first job entry ("Experience PUTNAM ASSOCIATES
+# BURLINGTON, MA", 5 words), which fails chunking.py's <=4-word
+# heading-shape gate and is never recognized as a heading at all, so
+# nothing after it gets tagged "experience". The guard still fires
+# correctly here -- score=None is still the right answer, there IS
+# nothing this scorer can find to grade -- so that verification stands;
+# only the recorded REASON was wrong. See ExperienceScorer's docstring
+# below for the same correction, and the chunking.py heading-shape gate
+# for the actual fix (a heading-prefix split, not a wider word limit).
 _EXPERIENCE_ORDER_WEIGHT = 0.2  # of max_points; the rest is per-entry completeness
 
 
@@ -507,9 +533,18 @@ class ExperienceScorer:
         completeness score already counts.
 
     Uncomputable (not a confident 0) when zero real entries parse from any
-    experience-labeled section -- R28 in the eval corpus exercises this:
-    its whole document extracts under one garbled heading with no
-    "experience" substring anywhere, so there's nothing here to grade.
+    experience-labeled section -- R28 in the eval corpus exercises this.
+    CORRECTED reason (was recorded as "its whole document extracts under
+    one garbled heading" / font-encoding corruption -- checked directly
+    with pymupdf and that's wrong, the text layer is clean; see the
+    _EXPERIENCE_ORDER_WEIGHT comment above for the full correction): R28's
+    Experience heading merges onto one line with the first job entry
+    ("Experience PUTNAM ASSOCIATES BURLINGTON, MA", 5 words), which fails
+    chunking.py's heading-shape gate, so no chunk ever carries
+    section="...experience..." and nothing downstream of it -- despite
+    being real, detailed, bulleted content -- gets found. The guard's
+    behavior is still correctly verified on a genuine parse-adjacent
+    failure, just not the one originally described.
 
     Known, honest limitations, not silently absorbed:
       - Title detection is keyword-based only
@@ -531,11 +566,18 @@ class ExperienceScorer:
         under a strict reading of the rubric but may not match how a human
         skimmed it.
 
-    Measured against the 39-resume corpus's human "experience" score (n=38,
-    R28 uncomputable on both sides): slope=0.237, intercept=12.57,
-    r^2=0.069, Spearman rho=0.214 (p=0.20, not significant), MAE=3.59. This
-    is real, weak signal -- reported honestly, not hidden. The clearest
-    disagreements are informative about WHY: R14 and R10 are both
+Measured against the 39-resume corpus's human "experience" score.
+    Re-measured after the heading-prefix-split fix (chunking.py's
+    _split_heading_prefix -- see evaluation/backlog.md's Phase D section)
+    closed R28's uncomputable case; reported as a fresh baseline, not
+    compared against the pre-fix n=38 figures, which were measured on a
+    smaller, R28-excluded sample and shouldn't be read as "the fix moved
+    the number" -- n=39, slope=0.253, intercept=62.06, r^2=0.078, Spearman
+    rho=0.230 (p=0.159, not significant), MAE=3.57 (points, 0-20 scale).
+    Still real, still weak signal -- reported honestly, not hidden; adding
+    R28 (machine 18.9/20 vs. human 16/20 -- a close, unremarkable pair)
+    didn't change that. The clearest disagreements are informative about
+    WHY: R14 and R10 are both
     Canva-style templates where the experience section's bullets were
     never replaced ("Lorem ipsum dolor sit amet..." -- literal, unfilled
     placeholder text), correctly scored near the bottom by the human

@@ -340,6 +340,107 @@ def _is_heading(line: str) -> bool:
     return bool(tokens & _HEADING_TOPIC_TOKENS) and not (tokens & _ROLE_NOUN_TOKENS)
 
 
+# Vocab phrases this fix supports are at most 3 words ("nice to have",
+# "core competencies", "professional experience"); longest-first so
+# "professional experience" wins over a would-be bare "professional" (which
+# isn't in _SECTION_VOCAB standalone anyway, but the ordering principle
+# matters generally).
+_HEADING_PREFIX_LENGTHS = (3, 2, 1)
+
+# See _split_heading_prefix's docstring: every occurrence of these as a
+# merge-detected prefix on the 39-resume corpus was a fact-listing
+# sub-label ("Languages: English & Spanish", "LANGUAGES Mandarin..."), not
+# a genuine section boundary. Excluded from that mechanism specifically,
+# not from _SECTION_VOCAB itself -- a standalone "Languages" heading still
+# works via _is_heading's exact-line match.
+_HEADING_PREFIX_EXCLUDED = frozenset({"languages"})
+
+
+def _split_heading_prefix(line: str) -> tuple[str, str] | None:
+    """Detect "Experience PUTNAM ASSOCIATES BURLINGTON, MA"-style merges:
+    a line too long to pass _is_heading's shape gate as a single unit, but
+    whose OPENING words are a real, known section heading and whose
+    remainder is distinct new content, not a grammatical continuation of
+    the heading as a sentence subject.
+
+    Found via R28 in the eval corpus (evaluation/backlog.md's Phase D
+    section): its Experience heading merged onto one line with the first
+    job entry's company and location, and _is_heading's word-count gate
+    rejected the whole 5-word line before ever checking whether it started
+    with a recognized heading -- the entire section fell back to
+    whatever section preceded it, though the content itself (real company
+    names, real bullets) was completely intact. Widening the word limit
+    was considered and rejected: it would accept "Skills include Python,
+    Docker, and Kubernetes" (6 words) as a heading outright, which is
+    wrong in the opposite direction. This function only ever returns a
+    split, never a bare "is this a heading" verdict -- segmentation
+    (does a boundary exist here) is answered by finding a genuine vocab
+    prefix; classification (is the rest of the line real content) is
+    answered by requiring it start with a capital letter, distinguishing
+    a merged proper-noun entity ("PUTNAM ASSOCIATES") from a lowercase
+    grammatical continuation ("include Python...") -- the same
+    segmentation-vs-classification split _is_heading's own docstring
+    describes, applied one level down: to where the boundary sits WITHIN
+    a line, not just whether one exists.
+
+    Deliberately narrow: only exact _SECTION_VOCAB phrases, not the wider
+    _HEADING_TOPIC_TOKENS set used elsewhere -- this mechanism is new and
+    more permissive in a different way (it fires on lines _is_heading
+    would never even look at), so it stays conservative rather than
+    compounding two loosened checks together.
+
+    A colon immediately after the prefix vetoes the split -- found on a
+    corpus sweep before shipping this, not assumed safe: "Languages:
+    English & Spanish fluency" and "Skills: Rhino3D, Adobe Illustrator..."
+    both matched the vocab-prefix + capitalized-remainder test (9/9 hits
+    on the 39-resume corpus were this pattern, only 1 was R28's genuine
+    case) before this guard existed. "Label: comma, separated, list" is a
+    fact-listing convention (see FACT_LISTING_PATTERN), not a section
+    boundary -- R28's real merge has no colon anywhere near "Experience".
+    The colon is the reliable signal telling the two apart, not sentence
+    case or word count, which both patterns share.
+
+    "languages" is excluded from the prefix vocabulary here even without
+    a colon ("LANGUAGES Mandarin (fluent) Spanish (intermediate)", no
+    colon at all) -- also found on the same sweep, sitting between two
+    other Skills-adjacent sub-labels ("DESIGN & BUILDING", "RELEVANT
+    PROJECT EXPERIENCE" as the actual next section), the same
+    fact-listing role as the colon cases, just without the punctuation
+    that would have caught it. Every "languages" hit this mechanism has
+    produced on this corpus has been this sub-label pattern, never a
+    genuine top-level section -- excluded on that evidence, not
+    hypothetically. `_is_heading`'s own exact-line match still recognizes
+    a standalone "Languages" heading fine; only this more permissive,
+    merge-detecting path treats it as unreliable.
+
+    Returns (heading_text, remainder_text) using the line's own
+    single-spaced word boundaries -- the caller locates both within the
+    original line via string search to preserve char offsets, so this
+    stays a pure classification function with no offset bookkeeping of
+    its own.
+    """
+    stripped = line.strip()
+    if not stripped or len(stripped) > 60 or _BULLET.match(line):
+        return None
+    words = stripped.split()
+    if len(words) <= 4:
+        return None  # _is_heading already handles anything this short
+    for plen in _HEADING_PREFIX_LENGTHS:
+        if len(words) <= plen:
+            continue
+        if words[plen - 1].endswith(":"):
+            continue  # "Languages: English & Spanish" -- a label, not a merged heading
+        prefix_text = " ".join(words[:plen])
+        prefix_low = prefix_text.lower().rstrip(":")
+        if prefix_low not in _SECTION_VOCAB or prefix_low in _HEADING_PREFIX_EXCLUDED:
+            continue
+        remainder_text = " ".join(words[plen:])
+        if not remainder_text[:1].isupper():
+            continue  # "Skills include Python..." -- a sentence, not a merge
+        return (prefix_text, remainder_text)
+    return None
+
+
 def _continues(prev: str, line: str) -> bool:
     """Is this line a wrapped continuation of the previous one?
 
@@ -404,6 +505,23 @@ def chunk_document(text: str) -> list[Chunk]:
                 char_start=line_start, char_end=line_start + len(line), index=idx,
             ))
             idx += 1
+            continue
+
+        split = _split_heading_prefix(line)
+        if split is not None:
+            heading_text, remainder_text = split
+            flush(line_start)
+            heading_offset = line.index(heading_text)
+            heading_start = line_start + heading_offset
+            section = heading_text.lower()
+            chunks.append(Chunk(
+                text=heading_text, kind=ChunkKind.HEADING, section=section,
+                char_start=heading_start, char_end=heading_start + len(heading_text), index=idx,
+            ))
+            idx += 1
+            remainder_offset = line.index(remainder_text, heading_offset + len(heading_text))
+            buf = [remainder_text]
+            buf_start = line_start + remainder_offset
             continue
 
         if buf and _continues(buf[-1], line):

@@ -40,6 +40,7 @@ worse failure than saying so.
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 
@@ -85,12 +86,58 @@ class PageInfo:
     has_text_layer: bool
 
 
+@dataclass(frozen=True, slots=True)
+class LinkAnnotation:
+    """A PDF hyperlink annotation (/Annots), not the text layer -- a
+    "Watch the demo" link or a LinkedIn icon carries its real target here,
+    which page.extract_words() never sees at all. label is best-effort:
+    the text-layer words whose bounding box overlaps this annotation's
+    rect, joined -- empty when nothing does (an icon/graphic-only link,
+    invisible to any text-layer parser, not just this one).
+    """
+
+    uri: str
+    page: int
+    x0: float
+    x1: float
+    top: float
+    bottom: float
+    label: str
+
+    @property
+    def is_invisible_to_text_layer(self) -> bool:
+        return not self.label.strip()
+
+
+# Loose enough to catch what a résumé author actually types (bare domains,
+# no scheme), tight enough not to swallow trailing punctuation/prose.
+_URL_IN_TEXT_PATTERN = re.compile(
+    r"(?:https?://|www\.)[^\s,;()\[\]<>]+|\b[\w.+-]+@[\w-]+\.[\w.-]+\b"
+    r"|\b(?:github|linkedin|gitlab|youtube|behance|gumroad)\.com/[^\s,;()\[\]<>]+",
+    re.IGNORECASE,
+)
+
+
+def _normalize_url_fragment(s: str) -> str:
+    """Strip scheme/www/mailto and trailing punctuation, lowercase --
+    enough to compare a URL as a human typed it in visible text against
+    the same URL as it appears in an annotation's URI, which are rarely
+    byte-identical (trailing slash, http vs https, www or not).
+    """
+    s = s.strip().rstrip(".,;:)]}>'\"").lower()
+    s = re.sub(r"^mailto:", "", s)
+    s = re.sub(r"^https?://", "", s)
+    s = re.sub(r"^www\.", "", s)
+    return s.rstrip("/")
+
+
 @dataclass
 class ExtractionResult:
     text: str
     words: list[Word] = field(default_factory=list)
     pages: list[PageInfo] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    annotations: list[LinkAnnotation] = field(default_factory=list)
 
     @property
     def column_counts(self) -> list[int]:
@@ -110,6 +157,64 @@ class ExtractionResult:
     @property
     def parse_status(self) -> str:
         return "ok" if self.is_readable else "unreadable"
+
+    @property
+    def text_layer(self) -> str:
+        """Explicit name for the channel `.text` already is -- read
+        alongside `.annotations` and `.merged` below, not instead of them.
+        """
+        return self.text
+
+    @property
+    def unclickable_urls(self) -> list[str]:
+        """URLs/emails written as visible text with no backing annotation
+        -- an ATS finding on its own: the applicant TYPED a link but it
+        isn't clickable in the PDF (no /Annots entry), so anyone reading
+        the PDF itself (not just a text-layer parser) can't click it
+        either. Checked via normalized substring match against every
+        annotation's URI, not exact equality -- see
+        _normalize_url_fragment for why exact match would miss most real
+        pairs (http vs https, trailing slash, www or not).
+        """
+        found_in_text = {m.group(0) for m in _URL_IN_TEXT_PATTERN.finditer(self.text)}
+        annotation_fragments = [_normalize_url_fragment(a.uri) for a in self.annotations]
+        unclickable = []
+        for url in found_in_text:
+            frag = _normalize_url_fragment(url)
+            if not any(frag in af or af in frag for af in annotation_fragments):
+                unclickable.append(url)
+        return sorted(unclickable)
+
+    @property
+    def invisible_annotations(self) -> list[LinkAnnotation]:
+        """Annotations with no text-layer words under their rect -- an
+        icon or styled graphic carrying a real link target that any
+        text-only parser (this one's own `.text_layer`, or a human
+        copy-pasting the résumé's text) cannot see at all.
+        """
+        return [a for a in self.annotations if a.is_invisible_to_text_layer]
+
+    @property
+    def merged(self) -> str:
+        """`.text_layer` plus a recovered listing of links the text layer
+        alone would never surface -- the real, addressable output of this
+        module's third channel, not a placeholder. Deliberately appended
+        as a labeled block rather than spliced inline at each link's
+        original position: precise inline placement would need the same
+        reading-order reconstruction this module already does for words,
+        applied to annotation rects too, which is real additional work
+        or another parser pass. Appending is honest about that (it's a
+        recovered list, not a reconstruction of where each link sat) and
+        already resolves the two findings `invisible_annotations` and
+        `unclickable_urls` exist to surface.
+        """
+        invisible = self.invisible_annotations
+        if not invisible:
+            return self.text
+        lines = [self.text, "", "Additional links found in this document (not visible in its text):"]
+        for a in invisible:
+            lines.append(f"- {a.uri}")
+        return "\n".join(lines)
 
 
 def _histogram_ink(words: list[Word], page_width: float, n_bins: int = _HIST_BINS) -> list[int]:
@@ -206,12 +311,94 @@ def reading_order(words: list[Word], column_bounds: list[tuple[float, float]]) -
     return lines
 
 
+_REPEATED_CHAR_RUN = re.compile(r"(.)\1{3,}")
+# Detection threshold is deliberately higher (8+) than the collapse
+# regex's own (4+): this is "does this look like whole-word duplicate
+# rendering at all", not "collapse every run of this length". A genuine
+# resume can contain a real 4-6-repeat digit run (a phone placeholder
+# "555.555.5555", or -- the case that caught this on real data, not a
+# hypothetical -- a real Gmail address "anumishra555555@gmail.com", six
+# actual 5's) without being corrupted; R36's actual corruption duplicated
+# every character ~17x, comfortably clear of any plausible legitimate run.
+_LONG_REPEATED_CHAR_RUN = re.compile(r"(.)\1{7,}")
+
+
+def _looks_like_duplicate_rendering(s: str) -> bool:
+    """True only when MOST of the string is made of long repeated-character
+    runs, not when it merely contains one. Caught by testing this module
+    against a real resume, not a synthetic one: the first version of this
+    function collapsed ANY run of 4+ identical characters anywhere in a
+    string, which corrupted "anumishra555555@gmail.com" (a real email
+    address with six genuine repeated digits) into "anumishra5@gmail.com"
+    -- a different, wrong address. R36's actual corruption duplicates
+    EVERY character of a word uniformly (roughly 17x each), so long runs
+    account for nearly the whole string's length; an isolated legitimate
+    repeat inside otherwise-normal text does not. Requiring both a longer
+    minimum run (see _LONG_REPEATED_CHAR_RUN) and that such runs cover
+    most of the string is what tells the two apart.
+    """
+    if not s:
+        return False
+    covered = sum(len(m.group(0)) for m in _LONG_REPEATED_CHAR_RUN.finditer(s))
+    return covered / len(s) > 0.5
+
+
+def _collapse_repeated_chars(s: str) -> str:
+    """Found while building this: some résumés (R36's icon captions,
+    checked directly) render a word as pdfplumber's OWN single word token
+    with each character duplicated ~17x -- "harshibar" comes back as
+    "hhhh...aaaa...rrrr...". This is real corruption in pdfplumber's word
+    extraction for this PDF's specific font embedding (checked: NOT
+    something this module's own column/reading-order logic introduces),
+    and it leaks into the plain .text channel too (126 such runs found in
+    R36's extracted text, not just this one caption) -- a genuine,
+    pre-existing bug, out of scope to fix at the source here (it would
+    need its own investigation into why pdfplumber's glyph clustering
+    duplicates characters for this font, and changing the .text channel's
+    output needs its own verification pass against every downstream
+    scorer, not a two-line patch). Collapsed here ONLY for label-matching,
+    where leaving "hhhh...aaaa..." as the label would wrongly report a
+    real caption as an invisible/icon-only link -- and only when
+    _looks_like_duplicate_rendering says this specific string is actually
+    that pattern, not just "contains a repeated character somewhere".
+    """
+    if not _looks_like_duplicate_rendering(s):
+        return s
+    return _REPEATED_CHAR_RUN.sub(r"\1", s)
+
+
+def _label_for_link(link: dict, page_words: list[Word]) -> str:
+    """Text-layer words whose bounding box overlaps a hyperlink annotation's
+    rect, in reading order left-to-right -- the visible text a viewer would
+    associate with this link, if any. Empty when nothing overlaps: an icon
+    or a graphic carries this link instead, invisible to any text-only
+    read of the page.
+    """
+    overlapping = [
+        w for w in page_words
+        if w.x1 > link["x0"] and w.x0 < link["x1"]
+        and w.bottom > link["top"] and w.top < link["bottom"]
+    ]
+    joined = " ".join(w.text for w in sorted(overlapping, key=lambda w: w.x0))
+    return _collapse_repeated_chars(joined)
+
+
 def extract_document(pdf_bytes_or_path) -> ExtractionResult:
-    """Extract text from a PDF, column-aware, with parse-safety warnings."""
+    """Extract text from a PDF, column-aware, with parse-safety warnings.
+
+    Three channels on the returned ExtractionResult: `.text_layer` (words
+    only -- what every text-based parser, including this one's `.text`,
+    has always returned), `.annotations` (link targets from /Annots, which
+    the text layer never sees), and `.merged` (text layer plus whatever
+    `.annotations` finds that the text layer alone would miss). See
+    LinkAnnotation and ExtractionResult's docstrings for the two ATS
+    findings this makes possible.
+    """
     all_words: list[Word] = []
     pages: list[PageInfo] = []
     text_lines: list[str] = []
     warnings: list[str] = []
+    annotations: list[LinkAnnotation] = []
 
     with pdfplumber.open(pdf_bytes_or_path) as pdf:
         for page_num, page in enumerate(pdf.pages, start=1):
@@ -220,6 +407,19 @@ def extract_document(pdf_bytes_or_path) -> ExtractionResult:
                 Word(text=w["text"], x0=w["x0"], x1=w["x1"], top=w["top"], bottom=w["bottom"], page=page_num)
                 for w in raw_words
             ]
+
+            # Annotations live independent of the text layer -- collect
+            # them even on a page with none (an image-only page can still
+            # carry a real link on top of the image).
+            for link in page.hyperlinks:
+                uri = link.get("uri")
+                if not uri:
+                    continue
+                annotations.append(LinkAnnotation(
+                    uri=uri, page=page_num,
+                    x0=link["x0"], x1=link["x1"], top=link["top"], bottom=link["bottom"],
+                    label=_label_for_link(link, words),
+                ))
 
             if not words:
                 has_images = len(page.images) > 0
@@ -248,6 +448,7 @@ def extract_document(pdf_bytes_or_path) -> ExtractionResult:
         words=all_words,
         pages=pages,
         warnings=warnings,
+        annotations=annotations,
     )
 
 

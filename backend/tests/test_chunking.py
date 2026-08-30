@@ -154,6 +154,58 @@ class TestResumeChunking:
         # which is what silently excluded these as skills-section noise.
         assert all(b.section != "technical skills" for b in bullets)
 
+    def test_heading_merged_with_first_entry_still_splits(self):
+        # R28 in the eval corpus: "Experience PUTNAM ASSOCIATES BURLINGTON,
+        # MA" -- 5 words, so _is_heading's shape gate rejects the whole
+        # line as a heading candidate before ever checking whether it
+        # starts with one. The entire section (real, detailed bullets)
+        # used to fall back to whatever section preceded it. Offsets must
+        # still be correct: the heading's char_end and the remainder's
+        # char_start both land at the real word boundary in the original
+        # text, not at some approximation.
+        text = "Experience PUTNAM ASSOCIATES BURLINGTON, MA\nAnalyst 20XX\n- Grew revenue by 30%\n"
+        chunks = chunk_resume(text)
+        heading = next(c for c in chunks if c.kind is ChunkKind.HEADING)
+        assert heading.text == "Experience"
+        assert heading.section == "experience"
+        assert text[heading.char_start:heading.char_end] == "Experience"
+
+        entry = next(c for c in chunks if "PUTNAM" in c.text)
+        assert entry.section == "experience"
+        assert text[entry.char_start:entry.char_start + len("PUTNAM")] == "PUTNAM"
+
+        bullet = next(c for c in chunks if c.kind is ChunkKind.BULLET)
+        assert bullet.section == "experience"
+
+    def test_label_colon_list_does_not_split_as_a_heading(self):
+        # "Languages: English & Spanish fluency" and "Skills: Rhino3D,
+        # Adobe Illustrator..." both matched the vocab-prefix test before
+        # this guard existed -- 8/9 hits on a corpus sweep were this
+        # pattern, not a genuine section merge. A colon right after the
+        # label word means "list follows", not "new section starts".
+        text = "Languages: English & Spanish fluency\n"
+        chunks = chunk_resume(text)
+        assert all(c.kind is not ChunkKind.HEADING for c in chunks)
+
+    def test_bare_languages_label_does_not_split_even_without_a_colon(self):
+        # "LANGUAGES Mandarin (fluent) Spanish (intermediate)" -- same
+        # fact-listing role as the colon case, found on the same corpus
+        # sweep (R35), just without the punctuation the colon guard
+        # catches. Every "languages" hit this mechanism produced on the
+        # real corpus was this sub-label pattern, never a genuine section.
+        text = "LANGUAGES Mandarin fluent Spanish intermediate\n"
+        chunks = chunk_resume(text)
+        assert all(c.kind is not ChunkKind.HEADING for c in chunks)
+
+    def test_sentence_starting_with_a_heading_word_does_not_split(self):
+        # "Skills include Python, Docker, and Kubernetes" is a normal
+        # sentence, not a merged heading -- the remainder starts lowercase
+        # ("include"), a grammatical continuation, not a new proper-noun
+        # entity the way "PUTNAM ASSOCIATES" is.
+        text = "Skills include Python, Docker, and Kubernetes for backend work.\n"
+        chunks = chunk_resume(text)
+        assert all(c.kind is not ChunkKind.HEADING for c in chunks)
+
 
 class TestJobDescriptionChunking:
     def test_company_boilerplate_is_excluded_from_scoring(self):
