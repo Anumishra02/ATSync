@@ -2,13 +2,11 @@ import CountUp from "@/components/CountUp";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 // Real measured numbers only -- pulled from the repo's own README /
-// evaluation, no invented "trusted by N". Note on the correlation slot:
-// the spec asked for "rank correlation (quality mode) 0.628", but the
-// project's README puts quality-mode Spearman rho at 0.260 (p=0.11) and
-// explicitly refuses to treat it as a headline number -- its CI has run
-// -0.23..+0.96. Featuring it would contradict the measurement honesty
-// the rest of the product is built on, so this slot shows MAE instead:
-// the number the CI regression gate actually holds.
+// evaluation, no invented "trusted by N", no client logos. The spec's
+// original stat 2 ("rank correlation 0.628") isn't in the repo and the
+// README explicitly refuses to headline Spearman rho at this sample
+// size; an earlier version of this strip showed the quality-mode MAE
+// instead, dropped here at the user's request as reading too negative.
 const STATS = [
   {
     glyph: "#",
@@ -23,18 +21,17 @@ const STATS = [
     tip: "Structure, Writing, Achievements, Skills, Experience, Relevance — 100 points total, 85 of them without a job description.",
   },
   {
+    glyph: "=",
+    value: 3,
+    label: "PDF parse channels",
+    tip: "Your PDF is read three ways — the text layer, hyperlink annotations, and their merge — so an icon-only email or LinkedIn link isn't missed.",
+  },
+  {
     glyph: "*",
     value: 27,
     suffix: "/39",
-    label: "Complete-score coverage",
-    tip: "27 of 39 corpus resumes get a score on every applicable dimension. The rest hit at least one the rubric can't assess — shown, not hidden.",
-  },
-  {
-    glyph: "~",
-    value: 12.85,
-    decimals: 2,
-    label: "Mean gap from human score",
-    tip: "Quality-mode mean absolute error against the human labels, on a 0–100 scale. The CI regression gate holds this number so it can't drift.",
+    label: "Fully scored, every dimension",
+    tip: "27 of 39 corpus resumes get a score on every applicable dimension. The rest hit at least one the rubric won't guess at — shown, not hidden.",
   },
 ];
 

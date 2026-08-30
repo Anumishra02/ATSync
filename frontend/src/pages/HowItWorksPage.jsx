@@ -1,87 +1,71 @@
-// Step 7 of the redesign. Rewritten against the real /v2/analyze pipeline
-// instead of the original 6-step marketing copy -- and split from the
-// product-capability content, which now has its own page (FeaturesPage).
-// This page is the process: four steps, sequential, mirroring the labels
-// the progress screen itself shows while a resume is actually running
-// through it (see pages/AnalysisProgressPage.jsx's step labels).
-const steps = [
+import { motion } from "framer-motion";
+import { PageIntro } from "@/components/content/Section";
+
+const EASE = [0.22, 1, 0.36, 1];
+
+// The process: four steps, in order, mirroring the labels the progress
+// screen shows while a resume is actually running through the pipeline
+// (see pages/AnalysisProgressPage.jsx).
+const STEPS = [
   {
-    num: "01",
+    n: "01",
     title: "Parse",
-    desc: "Your PDF is read three ways at once: the text layer, any hyperlink annotations (an icon-only email or LinkedIn link the text alone would never show), and how that maps onto sections — Experience, Skills, Education, and the rest.",
-    card: [
-      { icon: "📄", text: "Text layer + hyperlink annotations" },
-      { icon: "🔗", text: "Catches icon-only links plain text misses" },
-      { icon: "📋", text: "Sections identified from real headings" },
-    ],
+    desc: "Your PDF is read three ways at once — the text layer, any hyperlink annotations (an icon-only email or LinkedIn link the text alone would never show), and how that maps onto sections.",
+    points: ["Text layer + hyperlink annotations", "Catches icon-only links plain text misses", "Sections identified from real headings"],
   },
   {
-    num: "02",
+    n: "02",
     title: "Score",
-    desc: "Six dimensions, each checked against a fixed rubric — not a keyword count. See Features for exactly what each one measures and how many points it's worth.",
-    card: [
-      { icon: "🎯", text: "Six rubric dimensions, 100 points" },
-      { icon: "🧭", text: "Relevance only runs with a job description" },
-      { icon: "⚖️", text: "Full breakdown on the Features page" },
-    ],
+    desc: "Six dimensions, each checked against a fixed rubric — not a keyword count. Features has the full breakdown of what each one measures and what it's worth.",
+    points: ["Six rubric dimensions, 100 points", "Relevance only runs with a job description", "Each score carries the denominator it used"],
   },
   {
-    num: "03",
+    n: "03",
     title: "Verify",
     desc: "Contact info and links are checked, not estimated: phone validity by region, email deliverability by MX lookup, and whether your links actually resolve.",
-    card: [
-      { icon: "📞", text: "Phone validity by region" },
-      { icon: "📧", text: "Email deliverability (MX lookup)" },
-      { icon: "🔗", text: "Link reachability" },
-    ],
+    points: ["Phone validity by region", "Email deliverability (MX lookup)", "Link reachability + unclickable-URL detection"],
   },
   {
-    num: "04",
+    n: "04",
     title: "Report",
-    desc: "Your score, the points it's actually out of, and — honestly — any dimension it couldn't assess, instead of a silent zero.",
-    card: [
-      { icon: "🏆", text: "Score with its real denominator" },
-      { icon: "⚠️", text: "Uncomputable dimensions shown as such" },
-      { icon: "📋", text: "Per-dimension detail on request" },
-    ],
+    desc: "Your score, the points it's actually out of, and — plainly — any dimension it couldn't assess, instead of a silent zero.",
+    points: ["Score with its real denominator", "Uncomputable dimensions shown as such", "Verified contact findings, kept separate from the estimates"],
   },
 ];
 
-export default function HowItWorksPage({ onBack }) {
+export default function HowItWorksPage() {
   return (
-    <div className="hiw-page fu">
-      <button className="back-btn" onClick={onBack} style={{ marginBottom: 40 }}>
-        ← Back to home
-      </button>
-      <div style={{ textAlign: "center", marginBottom: 64 }}>
-        <div className="ai-badge" style={{ marginBottom: 20 }}>
-          How it works
-        </div>
-        <h1 className="hiw-title">
-          What happens when you <span>upload a resume</span>
-        </h1>
-        <p className="hiw-sub">Four steps, in order — the same ones the progress screen shows while it runs.</p>
-      </div>
-      <div className="hiw-steps">
-        {steps.map((step, i) => (
-          <div key={i} className="hiw-step fu" style={{ animationDelay: `${i * 0.08}s` }}>
-            <div className="hiw-step-left">
-              <div className="hiw-num">{step.num}</div>
-              <div className="hiw-line" />
-            </div>
-            <div className="hiw-content">
-              <h3 className="hiw-step-title">{step.title}</h3>
-              <p className="hiw-step-desc">{step.desc}</p>
-              <div className="hiw-step-card">
-                {step.card.map((row, j) => (
-                  <div key={j} className="hiw-step-card-row">
-                    <span className="hiw-icon">{row.icon}</span>
-                    <span>{row.text}</span>
-                  </div>
+    <div className="mx-auto w-full max-w-[720px] px-6 pb-24">
+      <PageIntro
+        eyebrow="How it works"
+        title="What happens when you upload a resume"
+        sub="Four steps, in order — the same ones the progress screen shows while it runs."
+      />
+
+      <div className="divide-y divide-hairline border-t border-hairline">
+        {STEPS.map((s, i) => (
+          <motion.div
+            key={s.n}
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6, delay: i * 0.05, ease: EASE }}
+            className="grid grid-cols-[3rem_1fr] gap-x-5 py-8 md:grid-cols-[4rem_1fr] md:gap-x-8"
+          >
+            <span className="font-pixel text-lg text-subtle">{s.n}</span>
+            <div>
+              <h3 className="font-pixel text-base tracking-wide text-ink">{s.title}</h3>
+              <p className="mt-2 max-w-[480px] text-[13px] leading-relaxed text-subtle">{s.desc}</p>
+              <ul className="mt-4 flex flex-col gap-2">
+                {s.points.map((p) => (
+                  <li key={p} className="grid grid-cols-[0.75rem_1fr] gap-2 text-[13px] text-ink/80">
+                    <span className="font-pixel text-ok">·</span>
+                    <span>{p}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>

@@ -1,8 +1,14 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { uploadResume, generateCoverLetter } from "@/lib/api";
 import { COVER_LETTER_TONES } from "@/lib/constants";
+import Dropzone from "@/components/Dropzone";
+import Pill from "@/components/Pill";
+import { cn } from "@/lib/utils";
 
-export default function CoverLetterPage({ onBack }) {
+const EASE = [0.22, 1, 0.36, 1];
+
+export default function CoverLetterPage() {
   const [file, setFile] = useState(null);
   const [jd, setJd] = useState("");
   const [tone, setTone] = useState("professional");
@@ -12,8 +18,8 @@ export default function CoverLetterPage({ onBack }) {
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
-    if (!file) return setError("Please upload your resume PDF");
-    if (!jd.trim()) return setError("Please paste a job description");
+    if (!file) return setError("Choose a PDF resume first");
+    if (!jd.trim()) return setError("A cover letter needs a job description to write against");
     setLoading(true);
     setError("");
     setResult(null);
@@ -21,18 +27,15 @@ export default function CoverLetterPage({ onBack }) {
       const uploaded = await uploadResume(file);
       const text = uploaded.full_text;
       if (!text || text.length < 10) {
-        setError("Could not extract text from PDF.");
+        setError("Couldn't extract text from that PDF.");
         setLoading(false);
         return;
       }
       const data = await generateCoverLetter({ resumeText: text, jobDescription: jd, tone });
-      if (data && data.cover_letter) {
-        setResult(data);
-      } else {
-        setError("Generation failed. Please try again.");
-      }
+      if (data && data.cover_letter) setResult(data);
+      else setError("Generation failed. Try again.");
     } catch (e) {
-      setError(`Error: ${e.response?.data?.detail || e.message || "Something went wrong."}`);
+      setError(e.response?.data?.detail || e.message || "Something went wrong.");
     }
     setLoading(false);
   };
@@ -44,136 +47,119 @@ export default function CoverLetterPage({ onBack }) {
   };
 
   return (
-    <div className="cl-page">
-      <div className="cl-left fu">
-        <button className="back-btn" onClick={onBack}>
-          ← Back to home
-        </button>
-        <div className="ai-badge">✦ AI Cover Letter Generator</div>
-        <h1 className="cl-title">
-          Generate your
-          <br />
-          <span style={{ color: "var(--accent)" }}>cover letter</span>
-        </h1>
-        <p className="cl-sub">
-          Upload your resume and paste the job description. AI writes a tailored cover letter in seconds.
+    <div className="mx-auto grid w-full max-w-[1000px] flex-1 gap-12 px-6 py-14 md:grid-cols-2 md:py-20">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: EASE }}
+      >
+        <p className="font-pixel text-[11px] uppercase tracking-[0.2em] text-subtle">Cover letter</p>
+        <h1 className="mt-3 font-pixel text-2xl text-ink">Write one against a role</h1>
+        <p className="mt-2 text-[13px] leading-relaxed text-subtle">
+          Your resume plus the job description. Generative, not scored — there&rsquo;s no rubric behind a cover
+          letter the way there is behind the analysis.
         </p>
-        <div className="upload-card">
-          <label className="field-label">Resume (PDF)</label>
-          <div className="drop-zone" style={{ marginBottom: 18 }}>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={(e) => {
-                setFile(e.target.files[0]);
-                setResult(null);
-              }}
-            />
-            <span className="drop-icon">📄</span>
-            <p className="drop-text">{file ? "" : "Click to upload your resume"}</p>
-            <p className="drop-hint">{file ? "" : "PDF only"}</p>
-            {file && <p className="file-ok">✓ {file.name}</p>}
-          </div>
-          <label className="field-label">Job Description</label>
-          <textarea
-            rows={5}
-            value={jd}
-            onChange={(e) => setJd(e.target.value)}
-            placeholder="Paste the full job description here..."
-            style={{ marginBottom: 18 }}
-          />
-          <label className="field-label">Tone</label>
-          <div className="tone-row">
-            {COVER_LETTER_TONES.map((t) => (
-              <button key={t} className={`tone-btn ${tone === t ? "active" : ""}`} onClick={() => setTone(t)}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-          {error && <div className="error-msg">{error}</div>}
-          <button className="btn btn-primary" onClick={handleGenerate} disabled={loading}>
-            {loading ? (
-              <>
-                <div className="spinner" />
-                Generating...
-              </>
-            ) : (
-              "Generate Cover Letter →"
-            )}
-          </button>
-          <p className="privacy">🔒 Your data is never stored</p>
-        </div>
-      </div>
 
-      <div className="cl-right fu2">
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "var(--text)" }}>Your Cover Letter</h2>
-        <div className="cl-output">
-          {/* Backend timeout for this call is 60s (services/cover_letter.py),
-              plus a possible cold start on Render's free tier if the backend
-              was idle. */}
+        <div className="mt-8 flex flex-col gap-6">
+          <Dropzone file={file} onSelect={(f) => { setFile(f); setResult(null); }} onClear={() => setFile(null)} />
+
+          <div>
+            <label htmlFor="cl-jd" className="font-pixel text-[11px] uppercase tracking-wider text-subtle">
+              Job description
+            </label>
+            <textarea
+              id="cl-jd"
+              rows={6}
+              value={jd}
+              onChange={(e) => setJd(e.target.value)}
+              placeholder="Paste the full job description. Required — without a role to write against, the result is a generic template."
+              className="mt-2 w-full resize-none rounded-lg border border-hairline bg-card px-4 py-3 text-[13px] leading-relaxed text-ink placeholder:text-absent focus:border-subtle focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <p className="font-pixel text-[11px] uppercase tracking-wider text-subtle">Tone</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {COVER_LETTER_TONES.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTone(t)}
+                  className={cn(
+                    "rounded-full border px-3.5 py-1.5 text-[12px] transition-colors duration-200 ease-stage",
+                    tone === t
+                      ? "border-ink bg-ink text-stage"
+                      : "border-hairline text-nav hover:border-subtle hover:text-ink",
+                  )}
+                >
+                  {t[0].toUpperCase() + t.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p className="text-[13px] text-warn">{error}</p>}
+
+          <Pill size="lg" onClick={handleGenerate} disabled={loading || !file || !jd.trim()}>
+            {loading ? "Writing…" : "Generate"}
+          </Pill>
+          <p className="text-[12px] text-absent">Your resume is processed in memory and not stored.</p>
+        </div>
+      </motion.div>
+
+      <div className="md:pt-1">
+        <p className="font-pixel text-[11px] uppercase tracking-wider text-subtle">Output</p>
+        <div className="mt-3 min-h-[420px] rounded-lg border border-hairline bg-card p-6">
           {loading && (
-            <div className="cl-loading">
-              <div className="cl-spinner" />
-              <p className="cl-loading-text">Writing your cover letter with AI...</p>
-              <p style={{ fontSize: 12, color: "var(--hint)", marginTop: 4 }}>
-                Can take up to a minute -- longer on the first request if the server's been idle
+            <div className="flex h-[380px] flex-col items-center justify-center gap-3 text-center">
+              <p className="font-pixel text-sm text-ink">WRITING…</p>
+              <p className="max-w-[280px] text-[12px] leading-relaxed text-absent">
+                Up to a minute — longer on the first request if the server&rsquo;s been idle.
               </p>
             </div>
           )}
+
           {!loading && !result && (
-            <div className="cl-output-placeholder">
-              <div className="cl-placeholder-icon">✉️</div>
-              <p className="cl-placeholder-text">
-                Your AI-generated cover letter
-                <br />
-                will appear here
-              </p>
-              <p style={{ fontSize: 12, color: "var(--hint)", marginTop: 8 }}>
-                Upload resume + paste JD to get started
-              </p>
+            <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-center">
+              <p className="text-[13px] text-subtle">Your draft will appear here.</p>
+              <p className="text-[12px] text-absent">Add a resume and a job description to start.</p>
             </div>
           )}
+
           {!loading && result && (
-            <>
-              <button className="copy-btn" onClick={handleCopy}>
-                {copied ? "✓ Copied!" : "Copy"}
+            <div className="relative">
+              <button
+                onClick={handleCopy}
+                className="absolute right-0 top-0 rounded-md border border-hairline px-3 py-1 text-[12px] text-nav transition-colors duration-200 ease-stage hover:border-subtle hover:text-ink"
+              >
+                {copied ? "Copied" : "Copy"}
               </button>
+
               {result.subject_line && (
-                <div className="cl-subject">
-                  <span>Subject:</span>
+                <p className="pr-16 text-[13px] text-ink">
+                  <span className="text-absent">Subject: </span>
                   {result.subject_line}
-                </div>
-              )}
-              {result.key_points?.length > 0 && (
-                <div className="cl-points">
-                  <p
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: "var(--hint)",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Key highlights
-                  </p>
-                  {result.key_points.map((p, i) => (
-                    <div key={i} className="cl-point">
-                      <div className="cl-point-dot" />
-                      <span>{p}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div style={{ height: 1, background: "var(--border)", marginBottom: 20 }} />
-              <p className="cl-letter">{result.cover_letter}</p>
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "0.5px solid var(--border)" }}>
-                <p style={{ fontSize: 12, color: "var(--hint)" }}>
-                  ~{result.word_count} words · {tone} tone
                 </p>
-              </div>
-            </>
+              )}
+
+              {result.key_points?.length > 0 && (
+                <ul className="mt-4 flex flex-col gap-2 border-t border-hairline pt-4">
+                  {result.key_points.map((p, i) => (
+                    <li key={i} className="grid grid-cols-[0.75rem_1fr] gap-2 text-[12px] text-subtle">
+                      <span className="font-pixel text-ok">·</span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <p className="mt-4 whitespace-pre-wrap border-t border-hairline pt-4 text-[13px] leading-loose text-ink/90">
+                {result.cover_letter}
+              </p>
+
+              <p className="mt-4 border-t border-hairline pt-3 font-pixel text-[11px] text-absent">
+                ~{result.word_count} words · {tone}
+              </p>
+            </div>
           )}
         </div>
       </div>

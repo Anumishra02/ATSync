@@ -28,8 +28,10 @@ describe("LandingPage", () => {
   it("stat strip uses real measured numbers, not the spec's unverified correlation", () => {
     renderLanding();
     expect(screen.getByText("Human-graded resumes")).toBeInTheDocument();
-    expect(screen.getByText("Complete-score coverage")).toBeInTheDocument();
-    // the 0.628 figure from the spec isn't in the repo — must not appear
+    expect(screen.getByText("Fully scored, every dimension")).toBeInTheDocument();
+    // the 0.628 figure from the spec isn't in the repo — must not appear;
+    // nor should the negative-reading MAE the user asked to drop
     expect(screen.queryByText(/0\.628/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/gap from human/i)).not.toBeInTheDocument();
   });
 });

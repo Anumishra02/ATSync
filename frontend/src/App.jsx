@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { analyzeResume } from "@/lib/api";
 import { SAMPLE_ANALYSIS } from "@/lib/sampleAnalysis";
-import GlobalStyles from "@/components/GlobalStyles";
 import Shell from "@/components/Shell";
 import LandingPage from "@/pages/LandingPage";
 import UploadPage from "@/pages/UploadPage";
@@ -14,12 +13,6 @@ import FeaturesPage from "@/pages/FeaturesPage";
 // Route/state orchestrator. Two axes of state:
 //   page    -- home | coverletter | howitworks | features
 //   subPage -- landing | upload | loading | results  (page === "home" only)
-//
-// Pages still on the legacy (light) stylesheet render inside
-// <div className="legacy">, which scopes the old CSS so it can't fight
-// the design tokens: cover letter (outside the spec's 7 steps) and the
-// how-it-works / features pages (content rebuilt, visual restyle still
-// pending in the other work stream).
 //
 // Dev-only: ?mock=results:<quality|match|uncomputable> jumps straight to
 // the results screen with a captured payload.
@@ -112,10 +105,8 @@ export default function App() {
   };
 
   return (
-    <>
-      <GlobalStyles />
-      <Shell
-        page={page}
+    <Shell
+      page={page}
         onNavigate={navigate}
         onHome={goHome}
         onCheckResume={startCheck}
@@ -130,21 +121,9 @@ export default function App() {
           />
         )}
 
-        {page === "coverletter" && (
-          <div className="legacy">
-            <CoverLetterPage onBack={goHome} />
-          </div>
-        )}
-        {page === "howitworks" && (
-          <div className="legacy">
-            <HowItWorksPage onBack={goHome} />
-          </div>
-        )}
-        {page === "features" && (
-          <div className="legacy">
-            <FeaturesPage onBack={goHome} />
-          </div>
-        )}
+        {page === "coverletter" && <CoverLetterPage />}
+        {page === "howitworks" && <HowItWorksPage />}
+        {page === "features" && <FeaturesPage />}
 
         {page === "home" && subPage === "upload" && (
           <UploadPage
@@ -166,6 +145,5 @@ export default function App() {
           <ResultsPage analysis={analysis} onReset={reset} onAddJd={editInputs} />
         )}
       </Shell>
-    </>
   );
 }
