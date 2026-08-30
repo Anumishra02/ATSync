@@ -17,7 +17,7 @@ describe("LandingPage", () => {
     const onHowItWorks = vi.fn();
     renderLanding({ onCheckResume, onHowItWorks });
     expect(screen.getByRole("heading", { name: /ATSync/i })).toBeInTheDocument();
-    expect(screen.getByText(/admits what it can.t measure/i)).toBeInTheDocument();
+    expect(screen.getByText(/see what the machine sees/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getAllByRole("button", { name: /check resume/i })[0]);
     await userEvent.click(screen.getByRole("button", { name: /how it works/i }));

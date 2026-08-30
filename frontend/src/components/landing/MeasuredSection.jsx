@@ -30,10 +30,10 @@ export default function MeasuredSection({ onMore }) {
   return (
     <section className="border-t border-hairline py-24">
       <div className="mx-auto max-w-[1000px] px-6 md:px-12">
-        <ScrollReveal>
+        <ScrollReveal scrub>
           <p className="font-pixel text-[11px] uppercase tracking-[0.2em] text-subtle">How it was measured</p>
-          <h2 className="mt-4 max-w-[620px] font-pixel text-[clamp(1.6rem,3vw,2.2rem)] leading-tight text-ink">
-            The part most resume tools don&rsquo;t show
+          <h2 className="sd-mask mt-4 max-w-[620px] font-pixel text-[clamp(1.6rem,3vw,2.2rem)] leading-tight text-ink">
+            <span>The part most resume tools don&rsquo;t show</span>
           </h2>
         </ScrollReveal>
 

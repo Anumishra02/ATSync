@@ -1,22 +1,36 @@
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-const EASE = [0.22, 1, 0.36, 1];
+// Scroll-driven reveal: fade + rise + unblur as the block crosses into
+// view, tracking scroll position continuously (native
+// `animation-timeline: view()` -- see .sd-rise in index.css) so it reads
+// smoother than an intersection-triggered tween. `delay` (kept for call
+// sites that still pass it) staggers the scroll range rather than a
+// timer. `scrub` opts into the symmetric version that also dissolves out
+// the top. Falls back to plain visible content where unsupported.
+export default function ScrollReveal({
+  as = "div",
+  delay = 0,
+  scrub = false,
+  className,
+  children,
+  style,
+  ...rest
+}) {
+  const Tag = as;
+  const offset = Math.min(delay * 45, 30);
+  const merged =
+    offset > 0
+      ? {
+          ...style,
+          animationRange: scrub
+            ? `entry ${4 + offset}% exit 98%`
+            : `entry ${2 + offset}% cover ${32 + offset / 2}%`,
+        }
+      : style;
 
-// Fade + rise as a block scrolls into view. Once only. Honours
-// prefers-reduced-motion via framer-motion's own reducedMotion handling
-// plus the CSS backstop in index.css.
-export default function ScrollReveal({ as = "div", delay = 0, y = 20, className, children, ...rest }) {
-  const MotionTag = motion[as] || motion.div;
   return (
-    <MotionTag
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.7, delay, ease: EASE }}
-      className={className}
-      {...rest}
-    >
+    <Tag className={cn(scrub ? "sd-scrub" : "sd-rise", className)} style={merged} {...rest}>
       {children}
-    </MotionTag>
+    </Tag>
   );
 }

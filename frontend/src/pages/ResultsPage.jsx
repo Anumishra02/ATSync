@@ -24,12 +24,18 @@ export default function ResultsPage({ analysis, onReset, onAddJd }) {
         <ScoreHeader analysis={analysis} onAddJd={onAddJd} />
 
         <div className="mt-4 divide-y divide-hairline">
-          {ordered.map((dim) => (
-            <DimensionRow key={dim.dimension} dim={dim} />
+          {ordered.map((dim, i) => (
+            <div
+              key={dim.dimension}
+              className="sd-rise"
+              style={{ animationRange: `entry ${2 + i * 4}% cover ${28 + i * 3}%` }}
+            >
+              <DimensionRow dim={dim} />
+            </div>
           ))}
         </div>
 
-        <div className="mt-10">
+        <div className="sd-rise mt-10">
           <ContactLinks contact={analysis.contact_links} parse={analysis.parse} />
         </div>
 

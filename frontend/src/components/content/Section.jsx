@@ -4,7 +4,10 @@ import { cn } from "@/lib/utils";
 const EASE = [0.22, 1, 0.36, 1];
 
 // Shared building blocks for the content pages (How it works, Features).
-// Flat on the stage -- hairline rules, no cards, no chips.
+// Flat on the stage -- hairline rules, no cards, no chips. Reveals are
+// scroll-driven (see .sd-* in index.css): headings slide up from behind a
+// clip, bodies rise + unblur, and the whole section dissolves back out as
+// it leaves the top of the viewport.
 
 export function PageIntro({ eyebrow, title, sub }) {
   return (
@@ -17,7 +20,9 @@ export function PageIntro({ eyebrow, title, sub }) {
       {eyebrow && (
         <p className="font-pixel text-[11px] uppercase tracking-[0.2em] text-subtle">{eyebrow}</p>
       )}
-      <h1 className="mt-4 font-pixel text-[clamp(1.9rem,4.5vw,3rem)] leading-tight text-ink">{title}</h1>
+      <h1 className="sd-mask mx-auto mt-4 font-pixel text-[clamp(1.9rem,4.5vw,3rem)] leading-tight text-ink">
+        <span>{title}</span>
+      </h1>
       {sub && <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-relaxed text-subtle">{sub}</p>}
     </motion.header>
   );
@@ -25,8 +30,12 @@ export function PageIntro({ eyebrow, title, sub }) {
 
 export function Section({ id, heading, note, children, className }) {
   return (
-    <section id={id} className={cn("border-t border-hairline py-10", className)}>
-      {heading && <h2 className="font-pixel text-sm tracking-[0.14em] text-ink">{heading}</h2>}
+    <section id={id} className={cn("sd-scrub border-t border-hairline py-10", className)}>
+      {heading && (
+        <h2 className="sd-mask font-pixel text-sm tracking-[0.14em] text-ink">
+          <span>{heading}</span>
+        </h2>
+      )}
       {note && <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-subtle">{note}</p>}
       <div className={cn(heading && "mt-6")}>{children}</div>
     </section>
@@ -47,6 +56,6 @@ export function Row({ label, value, sub }) {
 
 export function Note({ children }) {
   return (
-    <p className="mt-6 border-l-2 border-absent/40 pl-3 text-[13px] leading-relaxed text-subtle">{children}</p>
+    <p className="mt-6 border-l-2 border-flare/50 pl-3 text-[13px] leading-relaxed text-subtle">{children}</p>
   );
 }

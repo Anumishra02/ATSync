@@ -1,7 +1,4 @@
-import { motion } from "framer-motion";
 import { PageIntro } from "@/components/content/Section";
-
-const EASE = [0.22, 1, 0.36, 1];
 
 // The process: four steps, in order, mirroring the labels the progress
 // screen shows while a resume is actually running through the pipeline
@@ -43,29 +40,27 @@ export default function HowItWorksPage() {
       />
 
       <div className="divide-y divide-hairline border-t border-hairline">
-        {STEPS.map((s, i) => (
-          <motion.div
+        {STEPS.map((s) => (
+          <div
             key={s.n}
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6, delay: i * 0.05, ease: EASE }}
-            className="grid grid-cols-[3rem_1fr] gap-x-5 py-8 md:grid-cols-[4rem_1fr] md:gap-x-8"
+            className="sd-rise grid grid-cols-[3rem_1fr] gap-x-5 py-8 md:grid-cols-[4rem_1fr] md:gap-x-8"
           >
             <span className="font-pixel text-lg text-subtle">{s.n}</span>
             <div>
-              <h3 className="font-pixel text-base tracking-wide text-ink">{s.title}</h3>
+              <h3 className="sd-mask font-pixel text-base tracking-wide text-ink">
+                <span>{s.title}</span>
+              </h3>
               <p className="mt-2 max-w-[480px] text-[13px] leading-relaxed text-subtle">{s.desc}</p>
               <ul className="mt-4 flex flex-col gap-2">
                 {s.points.map((p) => (
                   <li key={p} className="grid grid-cols-[0.75rem_1fr] gap-2 text-[13px] text-ink/80">
-                    <span className="font-pixel text-ok">·</span>
+                    <span className="font-pixel text-flare">·</span>
                     <span>{p}</span>
                   </li>
                 ))}
               </ul>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

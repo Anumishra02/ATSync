@@ -54,7 +54,9 @@ export default function CoverLetterPage() {
         transition={{ duration: 0.7, ease: EASE }}
       >
         <p className="font-pixel text-[11px] uppercase tracking-[0.2em] text-subtle">Cover letter</p>
-        <h1 className="mt-3 font-pixel text-2xl text-ink">Write one against a role</h1>
+        <h1 className="sd-mask mt-3 font-pixel text-2xl text-ink">
+          <span>Write one against a role</span>
+        </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-subtle">
           Your resume plus the job description. Generative, not scored — there&rsquo;s no rubric behind a cover
           letter the way there is behind the analysis.
@@ -108,7 +110,7 @@ export default function CoverLetterPage() {
 
       <div className="md:pt-1">
         <p className="font-pixel text-[11px] uppercase tracking-wider text-subtle">Output</p>
-        <div className="mt-3 min-h-[420px] rounded-lg border border-hairline bg-card p-6">
+        <div className="card-bloom mt-3 min-h-[420px] rounded-lg border border-white/[0.06] bg-card p-6">
           {loading && (
             <div className="flex h-[380px] flex-col items-center justify-center gap-3 text-center">
               <p className="font-pixel text-sm text-ink">WRITING…</p>
@@ -145,7 +147,7 @@ export default function CoverLetterPage() {
                 <ul className="mt-4 flex flex-col gap-2 border-t border-hairline pt-4">
                   {result.key_points.map((p, i) => (
                     <li key={i} className="grid grid-cols-[0.75rem_1fr] gap-2 text-[12px] text-subtle">
-                      <span className="font-pixel text-ok">·</span>
+                      <span className="font-pixel text-flare">·</span>
                       <span>{p}</span>
                     </li>
                   ))}

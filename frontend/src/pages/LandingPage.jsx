@@ -1,5 +1,4 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import FluidCanvas from "@/components/FluidCanvas";
+import { motion } from "framer-motion";
 import StatStrip from "@/components/StatStrip";
 import Pill from "@/components/Pill";
 import GhostLink from "@/components/GhostLink";
@@ -16,32 +15,21 @@ const rise = (delay) => ({
 });
 
 // Spec Page 1, now scrollable. First viewport is the hero + stat strip
-// over the fluid canvas; below it, scroll-revealed sections that show
-// how the pipeline works and how it was measured -- real content, no
-// invented social proof. The canvas is fixed and fades out past the
-// first screen so the reading sections aren't sitting over moving fluid.
+// over the fluid canvas (both the canvas and the scroll-darkening veil
+// live in Shell now, shared across every page); below it, scroll-revealed
+// sections that show how the pipeline works and how it was measured --
+// real content, no invented social proof.
 export default function LandingPage({ onCheckResume, onHowItWorks, onExplainMetrics }) {
-  const { scrollY } = useScroll();
-  const veil = useTransform(scrollY, [0, 600], [0, 1]);
-
   return (
-    <div className="relative">
-      <FluidCanvas />
-      {/* darkens over the canvas as the hero scrolls away */}
-      <motion.div
-        aria-hidden
-        style={{ opacity: veil }}
-        className="pointer-events-none fixed inset-0 z-0 bg-stage"
-      />
-
-      <div className="relative z-10">
+    <div className="relative z-10">
+      <div>
         {/* ---- hero viewport ---- */}
         <section className="mx-auto flex min-h-[calc(100vh-60px)] w-full max-w-[1000px] flex-col px-6 md:px-12">
           <div className="flex flex-1 flex-col justify-center py-16">
             <motion.h1 {...rise(0.12)} className="font-pixel text-[clamp(2.5rem,7vw,5rem)] leading-[1.05] text-ink">
               ATSync
               <span className="mt-1 block text-[clamp(1.5rem,3.4vw,2.5rem)] leading-tight text-ink">
-                Resume analysis that admits what it can&rsquo;t measure
+                See what the machine sees.
               </span>
             </motion.h1>
 

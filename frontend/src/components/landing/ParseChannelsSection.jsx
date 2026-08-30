@@ -31,7 +31,7 @@ function Plane({ plane, spread }) {
   return (
     <motion.div
       style={{ translateZ: z, transformStyle: "preserve-3d" }}
-      className="absolute inset-0 rounded-xl border border-hairline bg-card/85 p-5 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.85)] backdrop-blur-sm"
+      className="card-bloom absolute inset-0 rounded-xl border border-hairline bg-card/85 p-5 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.85)] backdrop-blur-sm"
     >
       <p className="font-pixel text-[11px] uppercase tracking-wider text-subtle">{plane.title}</p>
       <div className="mt-3 flex flex-col gap-1.5">
@@ -80,10 +80,10 @@ export default function ParseChannelsSection() {
     <section ref={ref} className="border-t border-hairline py-24">
       <div className="mx-auto grid max-w-[1000px] gap-12 px-6 md:grid-cols-2 md:items-center md:px-12">
         <div>
-          <ScrollReveal>
+          <ScrollReveal scrub>
             <p className="font-pixel text-[11px] uppercase tracking-[0.2em] text-subtle">Parse</p>
-            <h2 className="mt-4 font-pixel text-[clamp(1.6rem,3vw,2.2rem)] leading-tight text-ink">
-              Three reads of one PDF
+            <h2 className="sd-mask mt-4 font-pixel text-[clamp(1.6rem,3vw,2.2rem)] leading-tight text-ink">
+              <span>Three reads of one PDF</span>
             </h2>
           </ScrollReveal>
           <div className="mt-6 flex flex-col gap-5">

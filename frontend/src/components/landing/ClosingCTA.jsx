@@ -4,9 +4,9 @@ import Pill from "@/components/Pill";
 export default function ClosingCTA({ onCheckResume }) {
   return (
     <section className="border-t border-hairline py-28">
-      <ScrollReveal className="mx-auto max-w-[1000px] px-6 text-center md:px-12">
-        <h2 className="mx-auto max-w-[560px] font-pixel text-[clamp(1.8rem,3.4vw,2.6rem)] leading-tight text-ink">
-          See what it can — and can&rsquo;t — tell you about your resume
+      <ScrollReveal scrub className="mx-auto max-w-[1000px] px-6 text-center md:px-12">
+        <h2 className="sd-mask mx-auto max-w-[560px] font-pixel text-[clamp(1.8rem,3.4vw,2.6rem)] leading-tight text-ink">
+          <span>See what it can — and can&rsquo;t — tell you about your resume</span>
         </h2>
         <div className="mt-8 flex justify-center">
           <Pill size="lg" onClick={onCheckResume}>

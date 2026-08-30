@@ -81,6 +81,7 @@
   /* brand tokens -> utilities: bg-stage, text-ink, text-subtle, text-nav,
      text-ok / bg-ok, text-warn, text-absent, border-hairline */
   --color-stage: var(--bg);
+  --color-flare: #d9974a; /* warm accent -- the same tone as the fluid canvas */
   --color-ink: var(--ink);
   --color-subtle: var(--subtle);
   --color-nav: var(--nav);
@@ -108,6 +109,8 @@
   html {
     background: var(--bg);
     color-scheme: dark;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -141,5 +144,165 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   Motion + accents
+
+   Palette is black / white / warm orange only. Two things live here:
+
+   1. A gradient BORDER treatment (`.card-bloom`) -- no fill, just a warm
+      hairline with a blurred glow hugging the edge, both lifting on hover.
+   2. Scroll-driven reveal utilities (`.sd-*`) -- these track the scroll
+      position continuously (native `animation-timeline: view()`), so they
+      read smoother than JS intersection triggers and can dissolve
+      symmetrically on the way out. Where the browser lacks support, the
+      content just renders normally.
+   ========================================================================= */
+
+/* ---- gradient border + edge glow ---------------------------------------- */
+
+.card-bloom {
+  position: relative;
+  isolation: isolate;
+}
+
+/* the visible warm hairline -- a gradient masked to the 1px ring only */
+.card-bloom::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(217, 151, 74, 0.55) 42%,
+    rgba(217, 151, 74, 0.12) 68%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.75;
+  transition: opacity 320ms var(--ease-stage);
+  pointer-events: none;
+}
+
+/* the same gradient, blurred and pushed behind -- glow on the border,
+   nothing across the middle (mask knocks the centre out) */
+.card-bloom::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 3px;
+  background: linear-gradient(
+    135deg,
+    rgba(217, 151, 74, 0.55) 0%,
+    rgba(217, 151, 74, 0.1) 46%,
+    rgba(255, 255, 255, 0.14) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter: blur(7px);
+  opacity: 0.5;
+  z-index: -1;
+  transition:
+    opacity 320ms var(--ease-stage),
+    filter 320ms var(--ease-stage);
+  pointer-events: none;
+}
+
+.card-bloom:hover::before {
+  opacity: 1;
+}
+.card-bloom:hover::after {
+  opacity: 0.95;
+  filter: blur(11px);
+}
+
+/* ---- scroll-driven reveals -------------------------------------------- */
+
+@keyframes sd-rise {
+  from {
+    opacity: 0;
+    transform: translateY(46px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* in on the way up the viewport, back out the top -- "emerging from and
+   receding into the dark" */
+@keyframes sd-scrub {
+  0% {
+    opacity: 0;
+    transform: translateY(46px);
+    filter: blur(10px);
+  }
+  18%,
+  74% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px);
+    filter: blur(6px);
+  }
+}
+
+@keyframes sd-mask-in {
+  from {
+    transform: translateY(115%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* heading slides up from behind a clip -- sharper than a fade */
+.sd-mask {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.08em;
+}
+.sd-mask > * {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .sd-rise,
+    .sd-scrub,
+    .sd-mask > * {
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+      animation-timeline: view();
+    }
+    .sd-rise {
+      animation-name: sd-rise;
+      animation-range: entry 2% cover 32%;
+    }
+    .sd-scrub {
+      animation-name: sd-scrub;
+      animation-range: entry 4% exit 98%;
+    }
+    .sd-mask > * {
+      animation-name: sd-mask-in;
+      animation-range: entry 0% cover 24%;
+    }
   }
 }
