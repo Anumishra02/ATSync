@@ -416,7 +416,11 @@ function CoverLetterPage({ onBack }) {
       <div className="cl-right fu2">
         <h2 style={{fontSize:16,fontWeight:600,marginBottom:20,color:"var(--text)"}}>Your Cover Letter</h2>
         <div className="cl-output">
-          {loading&&<div className="cl-loading"><div className="cl-spinner"/><p className="cl-loading-text">Writing your cover letter with AI...</p><p style={{fontSize:12,color:"var(--hint)",marginTop:4}}>This may take 10–15 seconds</p></div>}
+          {/* Backend timeout for this call is 60s (services/cover_letter.py),
+              plus a possible cold start on Render's free tier if the backend
+              was idle -- "10-15 seconds" was an honest number for a fast
+              call but not for this one; said plainly instead of reassuring. */}
+          {loading&&<div className="cl-loading"><div className="cl-spinner"/><p className="cl-loading-text">Writing your cover letter with AI...</p><p style={{fontSize:12,color:"var(--hint)",marginTop:4}}>Can take up to a minute -- longer on the first request if the server's been idle</p></div>}
           {!loading&&!result&&<div className="cl-output-placeholder"><div className="cl-placeholder-icon">✉️</div><p className="cl-placeholder-text">Your AI-generated cover letter<br/>will appear here</p><p style={{fontSize:12,color:"var(--hint)",marginTop:8}}>Upload resume + paste JD to get started</p></div>}
           {!loading&&result&&(
             <>
