@@ -2,7 +2,11 @@
 import { useState } from "react";
 import axios from "axios";
 
-const API = "https://atsync-5l6k.onrender.com/api/resume";
+// REACT_APP_API_URL (set at build time, e.g. in Vercel's project settings)
+// lets the backend host change without a code change + rebuild -- this
+// repo has already moved hosts once (Railway -> Render). Falls back to the
+// current known-good URL so a build without the env var set still works.
+const API = process.env.REACT_APP_API_URL || "https://atsync-5l6k.onrender.com/api/resume";
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -284,42 +288,61 @@ function ResumeVisual() {
   );
 }
 
-const CATEGORIES=[
-  {key:"ats_match",label:"ATS Match",icon:"🎯"},
-  {key:"quantification",label:"Quantify Impact",icon:"📊"},
-  {key:"repetition",label:"Repetition",icon:"🔁"},
-  {key:"contact",label:"Contact Info",icon:"📬"},
-  {key:"file_format",label:"File Format & Size",icon:"📄"},
-  {key:"sections",label:"Sections",icon:"📋"},
-  {key:"grammar",label:"Spelling & Grammar",icon:"✍️"},
+// /v2/analyze's six rubric dimensions -- see backend/services/analysis/scorers.py.
+// Distinct from the old v1 /analyze category list this replaces: dimensions
+// carry a status (scored / uncomputable / not_applicable), not just a score,
+// and max_points varies per dimension rather than every check being /100.
+const DIMENSIONS=[
+  {key:"structure",label:"Structure",icon:"📋",desc:"Are the sections a resume needs (Experience, Education, Skills…) present and properly headed?"},
+  {key:"writing",label:"Writing",icon:"✍️",desc:"Clarity, active voice, and freedom from filler language."},
+  {key:"achievements",label:"Achievements",icon:"🏆",desc:"How many bullet points show quantified or clearly stated impact."},
+  {key:"skills",label:"Skills",icon:"🎯",desc:"Recognized skills found in the resume -- matched against the job description when one is supplied."},
+  {key:"experience",label:"Experience",icon:"💼",desc:"Completeness of each work-experience entry (org, title, dates, location) and chronological order."},
+  {key:"relevance",label:"Relevance",icon:"🧭",desc:"How strongly the resume aligns with what the job description actually emphasizes. Needs a job description to run."},
 ];
 
-function CategoryBadge({score}) {
-  const color=score>=80?"#16a34a":score>=60?"#d97706":"#dc2626";
-  const bg=score>=80?"#f0fdf4":score>=60?"#fffbeb":"#fef2f2";
-  return <span className="cat-badge" style={{background:bg,color}}>{score}%</span>;
+const STATUS_META={
+  scored: {},
+  uncomputable: {label:"N/A", note:"Couldn't be scored -- the resume didn't give this dimension enough to work with."},
+  not_applicable: {label:"—", note:"Not applicable in quality mode -- add a job description to score this."},
+};
+
+function StatusBadge({dim}) {
+  if (!dim || dim.status!=="scored") {
+    return <span className="cat-badge" style={{background:"#f5f5f4",color:"var(--hint)"}}>{STATUS_META[dim?.status||"uncomputable"].label}</span>;
+  }
+  const pct = dim.max_points ? (dim.score/dim.max_points)*100 : 0;
+  const color=pct>=80?"#16a34a":pct>=60?"#d97706":"#dc2626";
+  const bg=pct>=80?"#f0fdf4":pct>=60?"#fffbeb":"#fef2f2";
+  return <span className="cat-badge" style={{background:bg,color}}>{dim.score}/{dim.max_points}</span>;
 }
 
-function ATSSection({data}) {
-  return <div className="section-card"><h2>🎯 ATS Match Score</h2><p className="section-desc">How well your resume matches the job description based on skill keywords.</p><div className="score-bar-track"><div className="score-bar-fill" style={{width:`${data.score}%`,background:scoreColor(data.score)}}/></div><p style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>{data.verdict}</p>{data.matched?.length>0&&<><p style={{fontSize:12,fontWeight:600,color:"var(--success)",marginBottom:6}}>✓ Matched Skills</p><div className="tags">{data.matched.map(s=><span key={s} className="tag tag-success">{s}</span>)}</div></>}{data.missing?.length>0&&<><p style={{fontSize:12,fontWeight:600,color:"var(--danger)",margin:"14px 0 6px"}}>✕ Missing Skills</p><div className="tags">{data.missing.map(s=><span key={s} className="tag tag-danger">{s}</span>)}</div></>}<div className="tip-box">💡 {data.tip}</div></div>;
-}
-function QuantifySection({data}) {
-  return <div className="section-card"><h2>📊 Quantify Impact</h2><p className="section-desc">Bullet points with numbers are 40% more likely to get past ATS.</p><div className="score-bar-track"><div className="score-bar-fill" style={{width:`${data.score}%`,background:scoreColor(data.score)}}/></div><div className="check-row"><span>Total bullet points</span><strong>{data.total_bullets}</strong></div><div className="check-row"><span>Quantified</span><strong style={{color:"var(--success)"}}>{data.quantified}</strong></div><div className="check-row"><span>Missing numbers</span><strong style={{color:data.issues>0?"var(--danger)":"var(--success)"}}>{data.issues}</strong></div><div className="tip-box">💡 {data.tip}</div></div>;
-}
-function RepetitionSection({data}) {
-  return <div className="section-card"><h2>🔁 Repetition</h2><p className="section-desc">Vary your language to show range and avoid monotony.</p><div className="score-bar-track"><div className="score-bar-fill" style={{width:`${data.score}%`,background:scoreColor(data.score)}}/></div>{data.repeated_words?.length>0?data.repeated_words.map((w,i)=><div key={i} className="check-row"><span style={{fontWeight:500}}>"{w.word}"</span><span style={{color:"var(--danger)",fontSize:12}}>used {w.count}×</span></div>):<p style={{color:"var(--success)",fontSize:13,marginTop:12}}>✓ No repetition issues found</p>}<div className="tip-box">💡 {data.tip}</div></div>;
-}
-function ContactSection({data}) {
-  return <div className="section-card"><h2>📬 Contact Information</h2><p className="section-desc">Complete contact info ensures recruiters can reach you.</p><div className="score-bar-track"><div className="score-bar-fill" style={{width:`${data.score}%`,background:scoreColor(data.score)}}/></div>{[["Email address",data.email],["Phone number",data.phone],["LinkedIn",data.linkedin],["GitHub",data.github]].map(([l,ok])=><div key={l} className="check-row"><span>{l}</span><span style={{color:ok?"var(--success)":"var(--danger)",fontWeight:600,fontSize:13}}>{ok?"✓ Found":"✕ Missing"}</span></div>)}<div className="tip-box">💡 {data.tip}</div></div>;
-}
-function FileSection({data}) {
-  return <div className="section-card"><h2>📄 File Format & Size</h2><p className="section-desc">PDF files under 2MB are preferred by ATS systems.</p><div className="score-bar-track"><div className="score-bar-fill" style={{width:`${data.score}%`,background:scoreColor(data.score)}}/></div><div className="check-row"><span>Format</span><span style={{color:data.is_pdf?"var(--success)":"var(--danger)",fontWeight:600,fontSize:13}}>{data.is_pdf?"✓ PDF":"✕ Not PDF"}</span></div><div className="check-row"><span>Size</span><span style={{color:data.size_ok?"var(--success)":"var(--danger)",fontWeight:600,fontSize:13}}>{data.size_ok?`✓ ${data.size_mb}MB`:`✕ ${data.size_mb}MB`}</span></div><div className="tip-box">💡 {data.tip}</div></div>;
-}
-function SectionsSection({data}) {
-  return <div className="section-card"><h2>📋 Resume Sections</h2><p className="section-desc">All key sections should be present for ATS and recruiters.</p><div className="score-bar-track"><div className="score-bar-fill" style={{width:`${data.score}%`,background:scoreColor(data.score)}}/></div>{data.sections&&Object.entries(data.sections).map(([n,ok])=><div key={n} className="check-row"><span>{n}</span><span style={{color:ok?"var(--success)":"var(--danger)",fontWeight:600,fontSize:13}}>{ok?"✓ Found":"✕ Missing"}</span></div>)}<div className="tip-box">💡 {data.tip}</div></div>;
-}
-function GrammarSection({data}) {
-  return <div className="section-card"><h2>✍️ Spelling & Grammar</h2><p className="section-desc">Even one spelling mistake can cost you the interview.</p><div className="score-bar-track"><div className="score-bar-fill" style={{width:`${data.score}%`,background:scoreColor(data.score)}}/></div>{data.mistakes?.length>0?data.mistakes.map((m,i)=><div key={i} className="mistake-item"><p className="mistake-word">"{m.word}" → {m.suggestion}</p>{m.context&&<p className="mistake-suggestion">{m.context}</p>}</div>):<p style={{color:"var(--success)",fontSize:13,marginTop:12}}>✓ No issues found</p>}<div className="tip-box">💡 {data.tip}</div></div>;
+function DimensionSection({dim}) {
+  const meta=DIMENSIONS.find(d=>d.key===dim.dimension)||{};
+  const pct = dim.status==="scored" && dim.max_points ? (dim.score/dim.max_points)*100 : 0;
+  const detailEntries = dim.status==="scored" && dim.detail
+    ? Object.entries(dim.detail).filter(([,v])=>typeof v!=="object")
+    : [];
+  return (
+    <div className="section-card">
+      <h2>{meta.icon} {meta.label||dim.dimension}</h2>
+      <p className="section-desc">{meta.desc}</p>
+      {dim.status==="scored" ? (
+        <>
+          <div className="score-bar-track"><div className="score-bar-fill" style={{width:`${pct}%`,background:scoreColor(pct)}}/></div>
+          <p style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>{dim.score} / {dim.max_points} points</p>
+          {detailEntries.map(([k,v])=>(
+            <div key={k} className="check-row"><span style={{textTransform:"capitalize"}}>{k.replace(/_/g," ")}</span><strong>{String(v)}</strong></div>
+          ))}
+        </>
+      ) : (
+        <div className="tip-box" style={{background:"#f5f5f4",border:"0.5px solid var(--border)",color:"var(--muted)"}}>
+          {dim.status==="uncomputable"?"⚠️ ":"ℹ️ "}{STATUS_META[dim.status].note}
+          {dim.detail?.reason&&<><br/><span style={{fontSize:12}}>{dim.detail.reason}</span></>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function CoverLetterPage({ onBack }) {
@@ -460,50 +483,41 @@ export default function App() {
   const [jd, setJd] = useState("");
   const [loadStep, setLoadStep] = useState(0);
   const [analysis, setAnalysis] = useState(null);
-  const [activeCategory, setActiveCategory] = useState("ats_match");
+  const [activeCategory, setActiveCategory] = useState("structure");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleAnalyze = async () => {
     if (!file) return setError("Please upload a PDF resume");
-    if (!jd.trim()) return setError("Please paste a job description");
     setLoading(true); setError(""); setSubPage("loading"); setLoadStep(0);
     try {
       const form = new FormData();
       form.append("file", file);
+      // Job description is optional -- /v2/analyze runs in quality mode
+      // without one (Relevance comes back not_applicable) and match mode
+      // with one. Only append it if the user actually typed something.
+      if (jd.trim()) form.append("job_description", jd);
       setLoadStep(1);
-      const r1 = await axios.post(`${API}/upload`, form);
-      const text = r1.data.full_text;
-      setLoadStep(2);
-      await new Promise(r=>setTimeout(r,700));
-      setLoadStep(3);
-      await new Promise(r=>setTimeout(r,700));
-      setLoadStep(4);
-      const r2 = await axios.post(`${API}/analyze`,{resume_text:text,job_description:jd,filename:file.name,file_size:file.size});
-      setAnalysis(r2.data);
+      const analyzePromise = axios.post(`${API}/v2/analyze`, form);
+      await new Promise(r=>setTimeout(r,700)); setLoadStep(2);
+      await new Promise(r=>setTimeout(r,700)); setLoadStep(3);
+      await new Promise(r=>setTimeout(r,700)); setLoadStep(4);
+      const r = await analyzePromise;
+      setAnalysis(r.data);
       setSubPage("results");
-    } catch {
-      setError("Something went wrong. Make sure backend is running.");
+    } catch (e) {
+      setError(e.response?.data?.detail || "Something went wrong. Make sure backend is running.");
       setSubPage("upload");
     }
     setLoading(false);
   };
 
-  const reset = () => { setSubPage("upload"); setAnalysis(null); setFile(null); setJd(""); setError(""); setLoadStep(0); setActiveCategory("ats_match"); };
+  const reset = () => { setSubPage("upload"); setAnalysis(null); setFile(null); setJd(""); setError(""); setLoadStep(0); setActiveCategory("structure"); };
 
   const renderSection = () => {
     if (!analysis) return null;
-    const cat = analysis.categories;
-    switch(activeCategory) {
-      case "ats_match": return <ATSSection data={cat.ats_match}/>;
-      case "quantification": return <QuantifySection data={cat.quantification}/>;
-      case "repetition": return <RepetitionSection data={cat.repetition}/>;
-      case "contact": return <ContactSection data={cat.contact}/>;
-      case "file_format": return <FileSection data={cat.file_format}/>;
-      case "sections": return <SectionsSection data={cat.sections}/>;
-      case "grammar": return <GrammarSection data={cat.grammar}/>;
-      default: return null;
-    }
+    const dim = analysis.dimensions.find(d=>d.dimension===activeCategory);
+    return dim ? <DimensionSection dim={dim}/> : null;
   };
 
   return (
@@ -528,7 +542,7 @@ export default function App() {
               <div className="hero-left fu">
                 <div className="ai-badge">✦ AI Powered · Free Resume Checker</div>
                 <h1 className="hero-title">Is your resume<br/><span>good enough?</span></h1>
-                <p className="hero-sub">A free AI resume checker doing 7 crucial checks to ensure your resume is ready to get you interview callbacks.</p>
+                <p className="hero-sub">A free AI resume checker scoring Structure, Writing, Achievements, Skills, Experience, and Relevance to ensure your resume is ready to get you interview callbacks. A job description is optional.</p>
                 <div className="upload-card">
                   <label className="field-label">Resume (PDF)</label>
                   <div className="drop-zone">
@@ -538,8 +552,8 @@ export default function App() {
                     <p className="drop-hint">{file?"":"PDF only · Max 2MB"}</p>
                     {file&&<p className="file-ok">✓ {file.name}</p>}
                   </div>
-                  <label className="field-label">Job Description</label>
-                  <textarea rows={4} value={jd} onChange={e=>setJd(e.target.value)} placeholder="Paste job description for ATS match analysis..."/>
+                  <label className="field-label">Job Description <span style={{textTransform:"none",fontWeight:400,color:"var(--hint)"}}>(optional)</span></label>
+                  <textarea rows={4} value={jd} onChange={e=>setJd(e.target.value)} placeholder="Paste a job description to also score Relevance -- or leave blank for a quality-only score..."/>
                   {error&&<div className="error-msg">{error}</div>}
                   <button className="btn btn-primary" onClick={handleAnalyze} disabled={loading}>
                     {loading?<><div className="spinner"/>Analyzing...</>:"Check My Resume →"}
@@ -587,17 +601,21 @@ export default function App() {
               <div className="results-left">
                 <div className="score-box">
                   <p className="score-box-label">Your Score</p>
-                  <p className="score-box-num" style={{color:scoreColor(analysis.overall_score)}}>{analysis.overall_score}</p>
-                  <div style={{display:"flex",justifyContent:"center",margin:"10px 0 4px"}}><ScoreCircle score={analysis.overall_score} size={110}/></div>
-                  <p className="score-box-sub">{analysis.total_issues} issues found</p>
+                  <p className="score-box-num" style={{color:scoreColor(analysis.score)}}>{analysis.score}</p>
+                  <div style={{display:"flex",justifyContent:"center",margin:"10px 0 4px"}}><ScoreCircle score={analysis.score} size={110}/></div>
+                  {/* available_points, not a flat /100: in quality mode Relevance
+                      is not_applicable and its 15 points aren't available at all,
+                      so the honest denominator is what actually ran, not 100. */}
+                  <p className="score-box-sub">{analysis.raw_score} / {analysis.available_points} points earned</p>
+                  <p className="score-box-sub" style={{marginTop:4}}>{analysis.mode==="match"?"Match mode — scored against your job description":"Quality mode — no job description supplied"}</p>
                 </div>
-                <p style={{fontSize:10,fontWeight:600,color:"var(--hint)",textTransform:"uppercase",letterSpacing:"0.08em",margin:"16px 0 8px 4px"}}>Checks</p>
-                {CATEGORIES.map(({key,label,icon})=>{
-                  const cat=analysis.categories[key];
+                <p style={{fontSize:10,fontWeight:600,color:"var(--hint)",textTransform:"uppercase",letterSpacing:"0.08em",margin:"16px 0 8px 4px"}}>Dimensions</p>
+                {DIMENSIONS.map(({key,label,icon})=>{
+                  const dim=analysis.dimensions.find(d=>d.dimension===key);
                   return (
                     <div key={key} className={`cat-item ${activeCategory===key?"active":""}`} onClick={()=>setActiveCategory(key)}>
                       <span className="cat-left">{icon} {label}</span>
-                      {activeCategory!==key&&<CategoryBadge score={cat?.score??0}/>}
+                      {activeCategory!==key&&<StatusBadge dim={dim}/>}
                     </div>
                   );
                 })}
