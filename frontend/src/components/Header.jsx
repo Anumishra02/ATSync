@@ -13,9 +13,10 @@ const NAV = [
 ];
 
 // Shared header. Fixed, 60px — pages still reserve pt-[60px]. `page` is
-// the active route key; onNavigate(key) switches route; onHome() also
-// resets the analyze flow.
-export default function Header({ page, onNavigate, onHome }) {
+// the active route key; onNavigate(key) switches route; onHome() goes to
+// the landing page (and resets the analyze flow); onCheckResume() goes
+// straight to the upload page.
+export default function Header({ page, onNavigate, onHome, onCheckResume }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-[60px] border-b border-hairline bg-stage/80 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-6 md:px-12">
@@ -42,7 +43,7 @@ export default function Header({ page, onNavigate, onHome }) {
           ))}
         </nav>
 
-        <Pill onClick={onHome}>Check Resume</Pill>
+        <Pill onClick={onCheckResume}>Check Resume</Pill>
       </div>
     </header>
   );

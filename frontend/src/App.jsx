@@ -3,6 +3,7 @@ import { analyzeResume } from "@/lib/api";
 import { SAMPLE_ANALYSIS } from "@/lib/sampleAnalysis";
 import GlobalStyles from "@/components/GlobalStyles";
 import Shell from "@/components/Shell";
+import LandingPage from "@/pages/LandingPage";
 import UploadPage from "@/pages/UploadPage";
 import AnalysisProgressPage from "@/pages/AnalysisProgressPage";
 import ResultsPage from "@/pages/ResultsPage";
@@ -12,12 +13,13 @@ import FeaturesPage from "@/pages/FeaturesPage";
 
 // Route/state orchestrator. Two axes of state:
 //   page    -- home | coverletter | howitworks | features
-//   subPage -- upload | loading | results  (only meaningful when page === "home")
+//   subPage -- landing | upload | loading | results  (page === "home" only)
 //
-// Pages not yet rebuilt render inside <div className="legacy">, which
-// scopes the old stylesheet so it can't fight the design tokens. The
-// landing hero + fluid canvas (spec step 6) is not built yet; until it
-// is, the upload page is the entry screen.
+// Pages still on the legacy (light) stylesheet render inside
+// <div className="legacy">, which scopes the old CSS so it can't fight
+// the design tokens: cover letter (outside the spec's 7 steps) and the
+// how-it-works / features pages (content rebuilt, visual restyle still
+// pending in the other work stream).
 //
 // Dev-only: ?mock=results:<quality|match|uncomputable> jumps straight to
 // the results screen with a captured payload.
@@ -33,7 +35,7 @@ const COLD_START_MS = 8000;
 
 export default function App() {
   const [page, setPage] = useState("home");
-  const [subPage, setSubPage] = useState(mockAnalysis ? "results" : "upload");
+  const [subPage, setSubPage] = useState(mockAnalysis ? "results" : "landing");
   const [file, setFile] = useState(null);
   const [jd, setJd] = useState("");
   const [stage, setStage] = useState(0);
@@ -50,13 +52,19 @@ export default function App() {
 
   const reset = () => {
     clearTimers();
-    setSubPage("upload");
+    setSubPage("landing");
     setAnalysis(null);
     setFile(null);
     setJd("");
     setError("");
     setStage(0);
     setColdStart(false);
+  };
+
+  const startCheck = () => {
+    setPage("home");
+    setSubPage("upload");
+    setError("");
   };
 
   // Back to the upload form without wiping the file/JD -- used by the
@@ -106,7 +114,22 @@ export default function App() {
   return (
     <>
       <GlobalStyles />
-      <Shell page={page} onNavigate={navigate} onHome={goHome} showFooter={subPage !== "loading"}>
+      <Shell
+        page={page}
+        onNavigate={navigate}
+        onHome={goHome}
+        onCheckResume={startCheck}
+        showFooter={!(page === "home" && (subPage === "landing" || subPage === "loading"))}
+        bare={page === "home" && subPage === "landing"}
+      >
+        {page === "home" && subPage === "landing" && (
+          <LandingPage
+            onCheckResume={startCheck}
+            onHowItWorks={() => setPage("howitworks")}
+            onExplainMetrics={() => setPage("features")}
+          />
+        )}
+
         {page === "coverletter" && (
           <div className="legacy">
             <CoverLetterPage onBack={goHome} />
