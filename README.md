@@ -195,13 +195,6 @@ python -m pytest -q -m slow  # network-dependent tests (MX lookups, HTTP HEAD)
 
 `/v2/analyze`'s rubric uses a different weighting (Structure 15, Writing 15, Achievements 20, Skills 15, Experience 20, Relevance 15 — 100 points total, renormalized over whichever dimensions actually ran) — see [Measurement & Evaluation](#measurement--evaluation).
 
-## Screenshots
-
-<img src="./front-image.png" width="700" />
-
-<img src="./cover-image.png" width="700" />
-
-<img src="./work-image.png" width="700" />
 
 > Cover letter generator with 5 tone options
 
